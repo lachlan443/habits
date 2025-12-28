@@ -1,0 +1,33 @@
+.cell {
+  width: 35px;
+  height: 28px;
+  border: 1px solid #e0e0e0;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background-color: white;
+  display: block;
+}
+
+.cell:hover:not(.disabled) {
+  border-color: #bdbdbd;
+}
+
+.cell.completed {
+  border: none;
+}
+
+.cell.skipped {
+  border: none;
+}
+
+.cell.disabled {
+  background-color: transparent;
+  cursor: not-allowed;
+  border-color: white;
+  opacity: 0.3;
+}
+
+.cell.today {
+  border: 2px solid #4CAF50;
+}

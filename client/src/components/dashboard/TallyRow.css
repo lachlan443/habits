@@ -1,0 +1,56 @@
+.tally-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0 0;
+  border-top: 2px solid #e0e0e0;
+  margin-top: 0;
+}
+
+.btn-new-habit-inline {
+  min-width: 200px;
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 2px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-new-habit-inline:hover {
+  background-color: #45a049;
+}
+
+.tally-cells {
+  display: flex;
+  gap: 1px;
+  flex: 1;
+}
+
+.tally-cell {
+  width: 35px;
+  flex-shrink: 0;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tally-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+}
+
+.tally-stats-spacer {
+  display: flex;
+  gap: 12px;
+  margin-left: 12px;
+}
+
+.stat-spacer {
+  width: 40px;
+}
