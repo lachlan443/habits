@@ -1,6 +1,9 @@
 services:
   habits:
-    build: .
+    build:
+      context: .
+      args:
+        - REACT_APP_API_URL=/api
     image: habits-tracker
     container_name: habits
     volumes:

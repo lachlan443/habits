@@ -1,6 +1,9 @@
 # Stage 1: Build React frontend
 FROM node:18-alpine AS client-builder
 
+ARG REACT_APP_API_URL
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
+
 WORKDIR /app/client
 COPY client/package*.json ./
 RUN npm ci --only=production
