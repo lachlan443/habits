@@ -18,14 +18,6 @@ function HabitGrid({ habits, completions, dateRange, onUpdate, onNewHabit, showS
     completionMap.set(key, c);
   });
 
-  if (habits.length === 0) {
-    return (
-      <div className="empty-state">
-        <p>No habits yet. Create your first habit to get started!</p>
-      </div>
-    );
-  }
-
   return (
     <div className="board-layout">
       <table className="board-table">
