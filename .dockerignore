@@ -6,7 +6,7 @@ README.md
 .env
 .env.local
 client/node_modules
-client/build
+client/dist
 *.db
 *.db-journal
 .DS_Store

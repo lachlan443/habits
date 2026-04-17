@@ -3,7 +3,6 @@ const db = require('../config/database');
 function runMigrations() {
   return new Promise((resolve, reject) => {
     db.serialize(() => {
-      // Users table
       db.run(`
         CREATE TABLE IF NOT EXISTS users (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -16,7 +15,6 @@ function runMigrations() {
         if (err) console.error('Error creating users table:', err);
       });
 
-      // Habits table
       db.run(`
         CREATE TABLE IF NOT EXISTS habits (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,7 +33,6 @@ function runMigrations() {
         if (err) console.error('Error creating habits table:', err);
       });
 
-      // Completions table
       db.run(`
         CREATE TABLE IF NOT EXISTS completions (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,7 +48,6 @@ function runMigrations() {
         if (err) console.error('Error creating completions table:', err);
       });
 
-      // Sessions table
       db.run(`
         CREATE TABLE IF NOT EXISTS sessions (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,7 +61,6 @@ function runMigrations() {
         if (err) console.error('Error creating sessions table:', err);
       });
 
-      // Add timezone column to users table (migration)
       db.run(`
         ALTER TABLE users ADD COLUMN timezone TEXT DEFAULT 'Australia/Sydney'
       `, (err) => {
@@ -74,14 +69,20 @@ function runMigrations() {
         }
       });
 
-      // Update existing users to have default timezone
       db.run(`
         UPDATE users SET timezone = 'Australia/Sydney' WHERE timezone IS NULL
       `, (err) => {
         if (err) console.error('Error setting default timezones:', err);
       });
 
-      // Indexes for performance
+      db.run(`
+        ALTER TABLE users ADD COLUMN encryption_salt TEXT
+      `, (err) => {
+        if (err && !err.message.includes('duplicate column')) {
+          console.error('Error adding encryption_salt column:', err);
+        }
+      });
+
       db.run('CREATE INDEX IF NOT EXISTS idx_habits_user_id ON habits(user_id)');
       db.run('CREATE INDEX IF NOT EXISTS idx_habits_archived ON habits(archived)');
       db.run('CREATE INDEX IF NOT EXISTS idx_completions_habit_id ON completions(habit_id)');

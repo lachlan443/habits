@@ -1,9 +1,29 @@
 const db = require('../config/database');
 const { calculateStreaks, calculateCompletionRate } = require('../utils/streakCalculator');
+const { encrypt, decrypt } = require('../services/encryptionService');
 
-// Get all habits for the current user
+function decryptHabit(habit, key) {
+  if (!habit) return habit;
+  return {
+    ...habit,
+    name: decrypt(habit.name, key),
+    frequency_days: habit.frequency_days ? JSON.parse(decrypt(habit.frequency_days, key)) : null,
+    archived: Boolean(habit.archived)
+  };
+}
+
+function requireKey(req, res) {
+  if (!req.encryptionKey) {
+    res.status(401).json({ error: 'Missing encryption key — please log in again' });
+    return false;
+  }
+  return true;
+}
+
 function getHabits(req, res) {
+  if (!requireKey(req, res)) return;
   const userId = req.userId;
+  const key = req.encryptionKey;
   const includeArchived = req.query.include_archived === 'true';
 
   let query = 'SELECT * FROM habits WHERE user_id = ?';
@@ -21,20 +41,19 @@ function getHabits(req, res) {
       return res.status(500).json({ error: 'Failed to fetch habits' });
     }
 
-    // Parse frequency_days JSON
-    const parsedHabits = habits.map(habit => ({
-      ...habit,
-      frequency_days: habit.frequency_days ? JSON.parse(habit.frequency_days) : null,
-      archived: Boolean(habit.archived)
-    }));
-
-    res.json({ habits: parsedHabits });
+    try {
+      res.json({ habits: habits.map(h => decryptHabit(h, key)) });
+    } catch (e) {
+      console.error('Decrypt habits error:', e);
+      res.status(500).json({ error: 'Failed to decrypt habits' });
+    }
   });
 }
 
-// Get a single habit
 function getHabit(req, res) {
+  if (!requireKey(req, res)) return;
   const userId = req.userId;
+  const key = req.encryptionKey;
   const habitId = req.params.id;
 
   db.get(
@@ -50,21 +69,22 @@ function getHabit(req, res) {
         return res.status(404).json({ error: 'Habit not found' });
       }
 
-      // Parse frequency_days JSON
-      habit.frequency_days = habit.frequency_days ? JSON.parse(habit.frequency_days) : null;
-      habit.archived = Boolean(habit.archived);
-
-      res.json({ habit });
+      try {
+        res.json({ habit: decryptHabit(habit, key) });
+      } catch (e) {
+        console.error('Decrypt habit error:', e);
+        res.status(500).json({ error: 'Failed to decrypt habit' });
+      }
     }
   );
 }
 
-// Create a new habit
 function createHabit(req, res) {
+  if (!requireKey(req, res)) return;
   const userId = req.userId;
+  const key = req.encryptionKey;
   const { name, color, frequency_type, frequency_days } = req.body;
 
-  // Validation
   if (!name || !color || !frequency_type) {
     return res.status(400).json({
       error: 'Name, color, and frequency_type are required'
@@ -83,12 +103,13 @@ function createHabit(req, res) {
     });
   }
 
-  const frequencyDaysJson = frequency_days ? JSON.stringify(frequency_days) : null;
+  const encryptedName = encrypt(name, key);
+  const encryptedFrequencyDays = frequency_days ? encrypt(JSON.stringify(frequency_days), key) : null;
 
   db.run(
     `INSERT INTO habits (user_id, name, color, frequency_type, frequency_days)
      VALUES (?, ?, ?, ?, ?)`,
-    [userId, name, color, frequency_type, frequencyDaysJson],
+    [userId, encryptedName, color, frequency_type, encryptedFrequencyDays],
     function(err) {
       if (err) {
         console.error('Create habit error:', err);
@@ -97,7 +118,6 @@ function createHabit(req, res) {
 
       const habitId = this.lastID;
 
-      // Fetch the created habit
       db.get(
         'SELECT * FROM habits WHERE id = ?',
         [habitId],
@@ -107,23 +127,20 @@ function createHabit(req, res) {
             return res.status(500).json({ error: 'Failed to fetch created habit' });
           }
 
-          habit.frequency_days = habit.frequency_days ? JSON.parse(habit.frequency_days) : null;
-          habit.archived = Boolean(habit.archived);
-
-          res.status(201).json({ habit });
+          res.status(201).json({ habit: decryptHabit(habit, key) });
         }
       );
     }
   );
 }
 
-// Update a habit
 function updateHabit(req, res) {
+  if (!requireKey(req, res)) return;
   const userId = req.userId;
+  const key = req.encryptionKey;
   const habitId = req.params.id;
   const { name, color, frequency_type, frequency_days, archived, order_index } = req.body;
 
-  // First check if habit exists and belongs to user
   db.get(
     'SELECT * FROM habits WHERE id = ? AND user_id = ?',
     [habitId, userId],
@@ -137,13 +154,12 @@ function updateHabit(req, res) {
         return res.status(404).json({ error: 'Habit not found' });
       }
 
-      // Build update query dynamically
       const updates = [];
       const params = [];
 
       if (name !== undefined) {
         updates.push('name = ?');
-        params.push(name);
+        params.push(encrypt(name, key));
       }
 
       if (color !== undefined) {
@@ -158,7 +174,7 @@ function updateHabit(req, res) {
 
       if (frequency_days !== undefined) {
         updates.push('frequency_days = ?');
-        params.push(frequency_days ? JSON.stringify(frequency_days) : null);
+        params.push(frequency_days ? encrypt(JSON.stringify(frequency_days), key) : null);
       }
 
       if (archived !== undefined) {
@@ -174,7 +190,6 @@ function updateHabit(req, res) {
       updates.push('updated_at = CURRENT_TIMESTAMP');
 
       if (updates.length === 1) {
-        // Only updated_at would be updated
         return res.status(400).json({ error: 'No fields to update' });
       }
 
@@ -188,7 +203,6 @@ function updateHabit(req, res) {
           return res.status(500).json({ error: 'Failed to update habit' });
         }
 
-        // Fetch updated habit
         db.get(
           'SELECT * FROM habits WHERE id = ?',
           [habitId],
@@ -198,12 +212,7 @@ function updateHabit(req, res) {
               return res.status(500).json({ error: 'Failed to fetch updated habit' });
             }
 
-            updatedHabit.frequency_days = updatedHabit.frequency_days
-              ? JSON.parse(updatedHabit.frequency_days)
-              : null;
-            updatedHabit.archived = Boolean(updatedHabit.archived);
-
-            res.json({ habit: updatedHabit });
+            res.json({ habit: decryptHabit(updatedHabit, key) });
           }
         );
       });
@@ -211,7 +220,6 @@ function updateHabit(req, res) {
   );
 }
 
-// Delete a habit
 function deleteHabit(req, res) {
   const userId = req.userId;
   const habitId = req.params.id;
@@ -234,12 +242,12 @@ function deleteHabit(req, res) {
   );
 }
 
-// Get habit statistics
 function getHabitStats(req, res) {
+  if (!requireKey(req, res)) return;
   const userId = req.userId;
+  const key = req.encryptionKey;
   const habitId = req.params.id;
 
-  // Get user's timezone first
   db.get(
     'SELECT timezone FROM users WHERE id = ?',
     [userId],
@@ -251,7 +259,6 @@ function getHabitStats(req, res) {
 
       const userTimezone = user?.timezone || 'Australia/Sydney';
 
-      // Get habit
       db.get(
         'SELECT * FROM habits WHERE id = ? AND user_id = ?',
         [habitId, userId],
@@ -265,10 +272,14 @@ function getHabitStats(req, res) {
             return res.status(404).json({ error: 'Habit not found' });
           }
 
-          // Parse frequency_days
-          habit.frequency_days = habit.frequency_days ? JSON.parse(habit.frequency_days) : null;
+          let decryptedHabit;
+          try {
+            decryptedHabit = decryptHabit(habit, key);
+          } catch (e) {
+            console.error('Decrypt habit stats error:', e);
+            return res.status(500).json({ error: 'Failed to decrypt habit' });
+          }
 
-          // Get all completions for this habit
           db.all(
             'SELECT * FROM completions WHERE habit_id = ? ORDER BY date',
             [habitId],
@@ -278,12 +289,10 @@ function getHabitStats(req, res) {
                 return res.status(500).json({ error: 'Failed to fetch habit stats' });
               }
 
-              // Calculate statistics with user timezone
-              const { currentStreak, longestStreak } = calculateStreaks(habit, completions, userTimezone);
-              const completionRate = calculateCompletionRate(habit, completions, userTimezone);
+              const { currentStreak, longestStreak } = calculateStreaks(decryptedHabit, completions, userTimezone);
+              const completionRate = calculateCompletionRate(decryptedHabit, completions, userTimezone);
               const totalCompletions = completions.filter(c => c.status === 'completed').length;
 
-              // Build completions by date object
               const completionsByDate = {};
               completions.forEach(c => {
                 completionsByDate[c.date] = c.status;

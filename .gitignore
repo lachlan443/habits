@@ -3,7 +3,7 @@ node_modules/
 client/node_modules/
 
 # Production build
-client/build/
+client/dist/
 
 # Database and config
 data/

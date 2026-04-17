@@ -1,5 +1,4 @@
 import React from 'react';
-import './FrequencySelector.css';
 
 const DAYS = [
   { key: 'mon', label: 'Mon' },
@@ -20,43 +19,53 @@ function FrequencySelector({ frequencyType, frequencyDays, onFrequencyTypeChange
     }
   };
 
+  const radioLabelClass = "flex items-center gap-2 cursor-pointer text-sm text-ink-muted";
+  const dayBtnBase = "px-4 py-2 border rounded text-[13px] cursor-pointer transition-all duration-200";
+  const dayBtnUnselected = "bg-white border-line hover:bg-surface-hover hover:border-line-dark";
+  const dayBtnSelected = "bg-brand text-white border-brand hover:bg-brand-hover";
+
   return (
-    <div className="frequency-selector">
-      <div className="frequency-type">
-        <label>
+    <div className="flex flex-col gap-4">
+      <div className="flex gap-4">
+        <label className={radioLabelClass}>
           <input
             type="radio"
             name="frequencyType"
             value="daily"
             checked={frequencyType === 'daily'}
             onChange={(e) => onFrequencyTypeChange(e.target.value)}
+            className="cursor-pointer"
           />
           Every day
         </label>
-        <label>
+        <label className={radioLabelClass}>
           <input
             type="radio"
             name="frequencyType"
             value="custom"
             checked={frequencyType === 'custom'}
             onChange={(e) => onFrequencyTypeChange(e.target.value)}
+            className="cursor-pointer"
           />
           Custom
         </label>
       </div>
 
       {frequencyType === 'custom' && (
-        <div className="day-selector">
-          {DAYS.map((day) => (
-            <button
-              key={day.key}
-              type="button"
-              className={`day-btn ${frequencyDays.includes(day.key) ? 'selected' : ''}`}
-              onClick={() => toggleDay(day.key)}
-            >
-              {day.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap gap-2">
+          {DAYS.map((day) => {
+            const isSelected = frequencyDays.includes(day.key);
+            return (
+              <button
+                key={day.key}
+                type="button"
+                className={`${dayBtnBase} ${isSelected ? dayBtnSelected : dayBtnUnselected}`}
+                onClick={() => toggleDay(day.key)}
+              >
+                {day.label}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

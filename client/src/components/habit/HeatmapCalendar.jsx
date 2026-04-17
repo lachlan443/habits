@@ -2,27 +2,22 @@ import React from 'react';
 import { addDays, formatDate } from '../../utils/dateUtils';
 import { getTodayInTimezone } from '../../utils/timezoneUtils';
 import { useAuth } from '../../context/AuthContext';
-import './HeatmapCalendar.css';
 
 function HeatmapCalendar({ completionsByDate, habitColor }) {
   const { timezone } = useAuth();
 
-  // Calculate the last 365 days in user's timezone
   const today = getTodayInTimezone(timezone);
-  const startDate = addDays(today, -364); // 365 days including today
+  const startDate = addDays(today, -364);
 
-  // Generate array of all dates in the range
   const dates = [];
   for (let i = 0; i < 365; i++) {
     dates.push(addDays(startDate, i));
   }
 
-  // Group dates by week (Sunday start)
   const weeks = [];
   let currentWeek = [];
-  let currentWeekStart = dates[0].getDay(); // Day of week for first date
+  let currentWeekStart = dates[0].getDay();
 
-  // Add empty cells for days before the first date
   for (let i = 0; i < currentWeekStart; i++) {
     currentWeek.push(null);
   }
@@ -30,9 +25,7 @@ function HeatmapCalendar({ completionsByDate, habitColor }) {
   dates.forEach((date, index) => {
     currentWeek.push(date);
 
-    // If Sunday or last date, complete the week
     if (date.getDay() === 6 || index === dates.length - 1) {
-      // Fill remaining days if needed
       while (currentWeek.length < 7) {
         currentWeek.push(null);
       }
@@ -41,35 +34,30 @@ function HeatmapCalendar({ completionsByDate, habitColor }) {
     }
   });
 
-  // Helper to get cell class based on completion status
+  const cellBase = "w-[14px] h-[14px] rounded-sm border border-line";
+  const cellEmpty = `${cellBase} bg-surface-hover`;
+  const cellCompleted = "w-[14px] h-[14px] rounded-sm border-0";
+  const cellSkipped = `${cellBase} heatmap-stripes`;
+
   const getCellClass = (date) => {
-    if (!date) return 'heatmap-cell empty';
+    if (!date) return cellEmpty;
 
     const dateStr = formatDate(date);
     const status = completionsByDate[dateStr];
 
-    if (status === 'completed') {
-      return 'heatmap-cell completed';
-    } else if (status === 'skipped') {
-      return 'heatmap-cell skipped';
-    }
-    return 'heatmap-cell empty';
+    if (status === 'completed') return cellCompleted;
+    if (status === 'skipped') return cellSkipped;
+    return cellEmpty;
   };
 
-  // Helper to get cell style (background color for completed)
   const getCellStyle = (date) => {
     if (!date) return {};
-
     const dateStr = formatDate(date);
     const status = completionsByDate[dateStr];
-
-    if (status === 'completed') {
-      return { backgroundColor: habitColor };
-    }
+    if (status === 'completed') return { backgroundColor: habitColor };
     return {};
   };
 
-  // Month labels
   const monthLabels = [];
   let lastMonth = null;
   weeks.forEach((week, weekIndex) => {
@@ -87,18 +75,17 @@ function HeatmapCalendar({ completionsByDate, habitColor }) {
   });
 
   return (
-    <div className="heatmap-calendar">
-      <div className="heatmap-header">
-        <h3>Last 365 Days</h3>
+    <div className="bg-white rounded-sm p-4 mt-6 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+      <div>
+        <h3 className="m-0 mb-4 text-lg font-semibold text-ink">Last 365 Days</h3>
       </div>
 
-      <div className="heatmap-content">
-        {/* Month labels */}
-        <div className="heatmap-months">
+      <div className="overflow-x-auto">
+        <div className="grid grid-flow-col [grid-auto-columns:14px] gap-0.5 mb-1 ml-10">
           {monthLabels.map((label, index) => (
             <div
               key={index}
-              className="month-label"
+              className="text-[11px] text-ink-soft"
               style={{ gridColumn: label.weekIndex + 1 }}
             >
               {label.label}
@@ -106,19 +93,17 @@ function HeatmapCalendar({ completionsByDate, habitColor }) {
           ))}
         </div>
 
-        {/* Days of week labels */}
-        <div className="heatmap-days">
+        <div className="grid grid-rows-7 [grid-template-rows:repeat(7,14px)] gap-0.5 float-left mr-1">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-            <div key={index} className="day-label">
+            <div key={index} className="text-[10px] text-ink-soft flex items-center w-8">
               {day}
             </div>
           ))}
         </div>
 
-        {/* Heatmap grid */}
-        <div className="heatmap-grid">
+        <div className="grid grid-flow-col [grid-auto-columns:14px] gap-0.5 ml-10">
           {weeks.map((week, weekIndex) => (
-            <div key={weekIndex} className="heatmap-week">
+            <div key={weekIndex} className="grid [grid-template-rows:repeat(7,14px)] gap-0.5">
               {week.map((date, dayIndex) => (
                 <div
                   key={dayIndex}
@@ -131,12 +116,11 @@ function HeatmapCalendar({ completionsByDate, habitColor }) {
           ))}
         </div>
 
-        {/* Legend */}
-        <div className="heatmap-legend">
+        <div className="flex items-center gap-1 mt-3 justify-end text-xs text-ink-soft clear-both">
           <span>Less</span>
-          <div className="legend-cell empty" />
-          <div className="legend-cell skipped" />
-          <div className="legend-cell completed" style={{ backgroundColor: habitColor }} />
+          <div className={cellEmpty} />
+          <div className={cellSkipped} />
+          <div className={cellCompleted} style={{ backgroundColor: habitColor }} />
           <span>More</span>
         </div>
       </div>

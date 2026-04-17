@@ -46,6 +46,10 @@ export const authService = {
 
   async changePassword(newPassword) {
     const response = await api.put('/auth/password', { password: newPassword });
+    if (response.data.token) {
+      localStorage.setItem('token', response.data.token);
+      setAuthToken(response.data.token);
+    }
     return response.data;
   },
 

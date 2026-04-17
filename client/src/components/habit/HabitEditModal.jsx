@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import ColorPicker from './ColorPicker';
 import FrequencySelector from './FrequencySelector';
 import { habitService } from '../../services/habitService';
-import './HabitModal.css';
 
 function HabitEditModal({ habit, onClose, onUpdated, onDeleted }) {
   const [name, setName] = useState(habit.name);
@@ -65,31 +64,50 @@ function HabitEditModal({ habit, onClose, onUpdated, onDeleted }) {
     }
   };
 
+  const fieldLabelClass = "block mb-1.5 text-ink-muted text-sm font-medium";
+  const inputClass = "w-full px-3 py-2.5 border border-line rounded text-sm box-border transition-colors focus:outline-none focus:border-brand";
+  const btnSecondary = "px-5 py-2.5 bg-white text-ink-soft border border-line rounded text-sm cursor-pointer transition-all hover:bg-surface-hover hover:border-line-dark";
+  const btnPrimary = "px-5 py-2.5 bg-brand text-white border-none rounded text-sm font-medium cursor-pointer transition-colors hover:bg-brand-hover disabled:opacity-60 disabled:cursor-not-allowed";
+  const btnWarning = "px-5 py-2.5 bg-warning text-white border-none rounded text-sm cursor-pointer transition-colors hover:bg-[#F57C00]";
+  const btnDanger = "px-5 py-2.5 bg-danger text-white border-none rounded text-sm cursor-pointer transition-colors hover:bg-[#D32F2F]";
+  const btnDangerConfirm = "px-5 py-2.5 bg-[#D32F2F] text-white border-none rounded text-sm font-semibold cursor-pointer animate-pop";
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <h2>Edit Habit</h2>
+    <div
+      className="fixed inset-0 bg-black/50 flex justify-center items-center z-[2000]"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white p-8 rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.2)] w-full max-w-[500px] max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="m-0 mb-6 text-2xl text-ink">Edit Habit</h2>
 
         <form onSubmit={handleSubmit}>
-          {error && <div className="error-message">{error}</div>}
+          {error && (
+            <div className="bg-danger-bg text-danger-text px-3 py-3 rounded mb-5 text-sm">
+              {error}
+            </div>
+          )}
 
-          <div className="form-group">
-            <label>Habit Name</label>
+          <div className="mb-5">
+            <label className={fieldLabelClass}>Habit Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Exercise, Read, Meditate"
+              className={inputClass}
             />
           </div>
 
-          <div className="form-group">
-            <label>Color</label>
+          <div className="mb-5">
+            <label className={fieldLabelClass}>Color</label>
             <ColorPicker selectedColor={color} onChange={setColor} />
           </div>
 
-          <div className="form-group">
-            <label>Frequency</label>
+          <div className="mb-5">
+            <label className={fieldLabelClass}>Frequency</label>
             <FrequencySelector
               frequencyType={frequencyType}
               frequencyDays={frequencyDays}
@@ -98,20 +116,16 @@ function HabitEditModal({ habit, onClose, onUpdated, onDeleted }) {
             />
           </div>
 
-          <div className="modal-actions">
-            <div className="modal-actions-left">
-              <button
-                type="button"
-                onClick={handleArchive}
-                className="btn-warning"
-              >
+          <div className="flex justify-between gap-3 mt-6">
+            <div className="flex gap-2">
+              <button type="button" onClick={handleArchive} className={btnWarning}>
                 Archive
               </button>
               {!showDeleteConfirm ? (
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="btn-danger"
+                  className={btnDanger}
                 >
                   Delete
                 </button>
@@ -119,18 +133,18 @@ function HabitEditModal({ habit, onClose, onUpdated, onDeleted }) {
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="btn-danger-confirm"
+                  className={btnDangerConfirm}
                 >
                   Confirm Delete
                 </button>
               )}
             </div>
 
-            <div className="modal-actions-right">
-              <button type="button" onClick={onClose} className="btn-secondary">
+            <div className="flex gap-2 ml-auto">
+              <button type="button" onClick={onClose} className={btnSecondary}>
                 Cancel
               </button>
-              <button type="submit" disabled={loading} className="btn-primary">
+              <button type="submit" disabled={loading} className={btnPrimary}>
                 {loading ? 'Saving...' : 'Save Changes'}
               </button>
             </div>

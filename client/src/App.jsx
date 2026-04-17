@@ -8,7 +8,6 @@ import Dashboard from './components/dashboard/Dashboard';
 import HabitDetailView from './components/habit/HabitDetailView';
 import ArchiveView from './components/archive/ArchiveView';
 import SettingsView from './components/settings/SettingsView';
-import './App.css';
 
 function App() {
   return (

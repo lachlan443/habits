@@ -1,7 +1,7 @@
 const db = require('../config/database');
 const { hashPassword, verifyPassword, generateToken } = require('../services/authService');
+const { generateSalt, deriveKey } = require('../services/encryptionService');
 
-// Signup
 async function signup(req, res) {
   const { username, password, timezone } = req.body;
 
@@ -23,10 +23,12 @@ async function signup(req, res) {
 
   try {
     const passwordHash = await hashPassword(password);
+    const encryptionSalt = generateSalt();
+    const encryptionKey = deriveKey(password, encryptionSalt);
 
     db.run(
-      'INSERT INTO users (username, password_hash, timezone) VALUES (?, ?, ?)',
-      [username, passwordHash, timezone],
+      'INSERT INTO users (username, password_hash, timezone, encryption_salt) VALUES (?, ?, ?, ?)',
+      [username, passwordHash, timezone, encryptionSalt],
       function(err) {
         if (err) {
           if (err.message.includes('UNIQUE constraint failed')) {
@@ -37,7 +39,7 @@ async function signup(req, res) {
         }
 
         const userId = this.lastID;
-        const token = generateToken(userId);
+        const token = generateToken(userId, encryptionKey);
 
         res.status(201).json({
           user: { id: userId, username, timezone },
@@ -51,7 +53,6 @@ async function signup(req, res) {
   }
 }
 
-// Login
 async function login(req, res) {
   const { username, password } = req.body;
 
@@ -60,7 +61,7 @@ async function login(req, res) {
   }
 
   db.get(
-    'SELECT id, username, password_hash, timezone FROM users WHERE username = ?',
+    'SELECT id, username, password_hash, timezone, encryption_salt FROM users WHERE username = ?',
     [username],
     async (err, user) => {
       if (err) {
@@ -79,7 +80,8 @@ async function login(req, res) {
           return res.status(401).json({ error: 'Invalid username or password' });
         }
 
-        const token = generateToken(user.id);
+        const encryptionKey = deriveKey(password, user.encryption_salt);
+        const token = generateToken(user.id, encryptionKey);
 
         res.json({
           user: {
@@ -97,9 +99,8 @@ async function login(req, res) {
   );
 }
 
-// Get current user
 function getMe(req, res) {
-  const userId = req.userId; // Set by auth middleware
+  const userId = req.userId;
 
   db.get(
     'SELECT id, username, timezone, created_at FROM users WHERE id = ?',
@@ -124,13 +125,10 @@ function getMe(req, res) {
   );
 }
 
-// Logout (optional, mainly client-side action)
 function logout(req, res) {
-  // In a more complex system, we could invalidate the token here
   res.json({ message: 'Logged out successfully' });
 }
 
-// Update username
 function updateUsername(req, res) {
   const userId = req.userId;
   const { username } = req.body;
@@ -160,7 +158,6 @@ function updateUsername(req, res) {
   );
 }
 
-// Change password
 async function changePassword(req, res) {
   const userId = req.userId;
   const { password } = req.body;
@@ -175,30 +172,41 @@ async function changePassword(req, res) {
 
   try {
     const passwordHash = await hashPassword(password);
+    const encryptionSalt = generateSalt();
+    const encryptionKey = deriveKey(password, encryptionSalt);
 
-    db.run(
-      'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [passwordHash, userId],
-      function(err) {
+    db.serialize(() => {
+      db.run('DELETE FROM habits WHERE user_id = ?', [userId], (err) => {
         if (err) {
-          console.error('Change password error:', err);
+          console.error('Change password (clear habits) error:', err);
           return res.status(500).json({ error: 'Failed to change password' });
         }
 
-        if (this.changes === 0) {
-          return res.status(404).json({ error: 'User not found' });
-        }
+        db.run(
+          'UPDATE users SET password_hash = ?, encryption_salt = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+          [passwordHash, encryptionSalt, userId],
+          function(err) {
+            if (err) {
+              console.error('Change password error:', err);
+              return res.status(500).json({ error: 'Failed to change password' });
+            }
 
-        res.json({ message: 'Password changed successfully' });
-      }
-    );
+            if (this.changes === 0) {
+              return res.status(404).json({ error: 'User not found' });
+            }
+
+            const token = generateToken(userId, encryptionKey);
+            res.json({ message: 'Password changed successfully', token });
+          }
+        );
+      });
+    });
   } catch (error) {
     console.error('Change password error:', error);
     res.status(500).json({ error: 'Failed to change password' });
   }
 }
 
-// Update timezone
 function updateTimezone(req, res) {
   const userId = req.userId;
   const { timezone } = req.body;
@@ -229,18 +237,15 @@ function updateTimezone(req, res) {
   );
 }
 
-// Delete account
 function deleteAccount(req, res) {
   const userId = req.userId;
 
-  // First, delete all user's habits (cascading will handle completions)
   db.run('DELETE FROM habits WHERE user_id = ?', [userId], (err) => {
     if (err) {
       console.error('Delete habits error:', err);
       return res.status(500).json({ error: 'Failed to delete account' });
     }
 
-    // Then delete the user
     db.run('DELETE FROM users WHERE id = ?', [userId], function(err) {
       if (err) {
         console.error('Delete user error:', err);

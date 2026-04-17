@@ -12,19 +12,21 @@ A habit tracking application inspired by everyday.app, built with Express.js, Re
 - Color-coded habits
 - Archive and delete habits
 - User authentication with secure password hashing
+- Per-user AES-256-GCM encryption of habit names and frequency (key derived from the user's password — the server operator cannot decrypt user data from the database alone)
 - Fully containerized with Docker
 
 ## Tech Stack
 
-- **Backend**: Express.js (Node.js) with SQLite database
-- **Frontend**: React with vanilla CSS
+- **Backend**: Express.js (Node.js 20) with SQLite database
+- **Frontend**: React + Vite + Tailwind CSS v4
 - **Authentication**: JWT tokens with bcrypt
+- **Encryption**: AES-256-GCM with PBKDF2 key derivation (200k iterations)
 - **Deployment**: Docker with volume persistence
 
 ## Development Setup
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 20+
 - npm
 
 ### Running Locally
@@ -38,7 +40,7 @@ A habit tracking application inspired by everyday.app, built with Express.js, Re
 2. **Start the React development server (in a new terminal):**
    ```bash
    cd client
-   npm start
+   npm run dev
    ```
    Frontend will run on http://localhost:3000 and proxy API requests to port 7160
 
@@ -51,7 +53,7 @@ A habit tracking application inspired by everyday.app, built with Express.js, Re
 
 ```bash
 # Build the Docker image
-docker build -t habits-tracker .
+docker build -t habits-tracker --build-arg VITE_API_URL=/api .
 
 # Run with docker-compose
 docker-compose up -d
@@ -80,13 +82,15 @@ services:
 ### Data Persistence
 
 All configuration and data is stored in `/config`:
-- `/config/habits.db` - SQLite database
+- `/config/habits.db` - SQLite database (habit names and frequency are stored encrypted)
 - `/config/jwt_secret.txt` - JWT signing secret (auto-generated on first run)
 
 This allows you to:
 - Recreate the container without losing data
 - Back up your habits by copying the `/config` directory
 - Migrate to a new server by moving the `/config` directory
+
+The JWT secret alone cannot decrypt habit data — that requires each user's password. Changing a user's password rotates their encryption key and wipes their existing habits, since old ciphertext cannot be re-keyed without the prior password.
 
 ## Usage
 
@@ -141,6 +145,10 @@ Click the "⋯" button next to a habit to:
 - `POST /api/auth/signup` - Create account
 - `POST /api/auth/login` - Login
 - `GET /api/auth/me` - Get current user
+- `PUT /api/auth/username` - Update username
+- `PUT /api/auth/timezone` - Update timezone
+- `PUT /api/auth/password` - Change password (rotates encryption key, wipes existing habits)
+- `DELETE /api/auth/account` - Delete account
 - `POST /api/auth/logout` - Logout
 
 ### Habits
@@ -162,7 +170,4 @@ Click the "⋯" button next to a habit to:
 - `PORT` - Server port (default: 7160)
 - `DB_PATH` - SQLite database path (default: /config/habits.db)
 - `JWT_SECRET_FILE` - Path to JWT secret file (default: /config/jwt_secret.txt)
-
-## License
-
-ISC
+- `VITE_API_URL` - Build-time API base URL for the frontend (default: /api)

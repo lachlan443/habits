@@ -7,7 +7,6 @@ import { completionService } from '../../services/completionService';
 import { addDays, isSameDay } from '../../utils/dateUtils';
 import { getTodayInTimezone, dateToUTC } from '../../utils/timezoneUtils';
 import { useAuth } from '../../context/AuthContext';
-import './Dashboard.css';
 
 function Dashboard() {
   const { timezone } = useAuth();
@@ -22,16 +21,14 @@ function Dashboard() {
     end: getTodayInTimezone(timezone)
   });
 
-  // Calculate how many days can fit based on viewport width
   const calculateDaysToShow = useCallback(() => {
     const viewportWidth = window.innerWidth;
     const habitLabelWidth = 130;
-    const statsColumnsWidth = 72; // 60px + 12px margin
-    const dateColumnWidth = 35; // Cell width
-    const padding = 120; // Increased padding for safety
-    const boardPadding = 16; // board-layout padding (8px × 2)
+    const statsColumnsWidth = 72;
+    const dateColumnWidth = 35;
+    const padding = 120;
+    const boardPadding = 16;
 
-    // Hide stats on mobile
     const shouldShowStats = viewportWidth >= 1200;
     setShowStats(shouldShowStats);
 
@@ -39,14 +36,11 @@ function Dashboard() {
     const availableWidth = viewportWidth - fixedWidth;
     const days = Math.floor(availableWidth / dateColumnWidth);
 
-    // Be conservative: subtract 1 to prevent overflow, then center
     const safeDays = Math.max(7, days - 1);
 
-    // Minimum 7 days, maximum 60 days
     return Math.max(7, Math.min(safeDays, 60));
   }, []);
 
-  // Update days to show on mount and resize
   useEffect(() => {
     const updateDays = () => {
       const days = calculateDaysToShow();
@@ -68,7 +62,6 @@ function Dashboard() {
       if (showLoading) {
         setLoading(true);
       }
-      // Convert dates to UTC for API call
       const startUTC = dateToUTC(dateRange.start, timezone);
       const endUTC = dateToUTC(dateRange.end, timezone);
 
@@ -94,8 +87,6 @@ function Dashboard() {
   const navigateNext = () => {
     const today = getTodayInTimezone(timezone);
     const newEnd = addDays(dateRange.end, 7);
-
-    // Cap end date at today - never show future dates
     const cappedEnd = newEnd > today ? today : newEnd;
 
     setDateRange({
@@ -124,27 +115,35 @@ function Dashboard() {
     await loadData(false);
   };
 
+  const navBtnClass = "px-4 py-2 bg-transparent border border-line rounded cursor-pointer text-lg transition-all hover:bg-surface-hover hover:border-line-dark disabled:opacity-50 disabled:cursor-not-allowed";
+
   if (loading) {
     return (
-      <div className="dashboard-loading">
+      <div className="min-h-screen">
         <Header />
-        <div className="loading-message">Loading...</div>
+        <div className="flex justify-center items-center h-[400px] text-ink-soft text-base">
+          Loading...
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="dashboard">
+    <div className="min-h-screen bg-surface">
       <Header />
 
-      <div className="dashboard-content">
-        {/* Navigation controls */}
-        <div className="date-navigation">
-          <button onClick={navigatePrev} className="nav-btn">&larr;</button>
-          <button onClick={goToToday} className="btn-today">Today</button>
+      <div className="mx-auto p-3 overflow-x-hidden flex flex-col items-center max-w-full">
+        <div className="flex justify-center items-center gap-3 mb-2">
+          <button onClick={navigatePrev} className={navBtnClass}>&larr;</button>
+          <button
+            onClick={goToToday}
+            className="px-4 py-2 bg-white border border-line rounded cursor-pointer text-sm transition-all hover:bg-surface-hover hover:border-line-dark"
+          >
+            Today
+          </button>
           <button
             onClick={navigateNext}
-            className="nav-btn"
+            className={navBtnClass}
             disabled={isSameDay(dateRange.end, getTodayInTimezone(timezone))}
           >
             &rarr;

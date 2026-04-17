@@ -1,17 +1,17 @@
 # Stage 1: Build React frontend
-FROM node:18-alpine AS client-builder
+FROM node:20-alpine AS client-builder
 
-ARG REACT_APP_API_URL
-ENV REACT_APP_API_URL=$REACT_APP_API_URL
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 
 WORKDIR /app/client
 COPY client/package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 COPY client/ ./
 RUN npm run build
 
 # Stage 2: Build Express backend and final image
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ RUN npm ci --only=production
 COPY src/ ./src/
 
 # Copy built frontend from stage 1
-COPY --from=client-builder /app/client/build ./public
+COPY --from=client-builder /app/client/dist ./public
 
 # Create /config directory for volume mount
 RUN mkdir -p /config

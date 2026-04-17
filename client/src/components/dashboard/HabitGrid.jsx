@@ -5,13 +5,11 @@ import HabitEditModal from '../habit/HabitEditModal';
 import { formatDate, getDateRange, isSameDay, getDayName } from '../../utils/dateUtils';
 import { calculateHabitStats } from '../../utils/statisticsUtils';
 import { isHabitApplicable } from '../../utils/frequencyUtils';
-import './HabitGrid.css';
 
 function HabitGrid({ habits, completions, dateRange, onUpdate, onNewHabit, showStats }) {
   const dates = getDateRange(dateRange.start, dateRange.end);
   const navigate = useNavigate();
 
-  // Build completion map for fast lookup
   const completionMap = new Map();
   completions.forEach(c => {
     const key = `${c.habit_id}-${c.date}`;
@@ -19,8 +17,8 @@ function HabitGrid({ habits, completions, dateRange, onUpdate, onNewHabit, showS
   });
 
   return (
-    <div className="board-layout">
-      <table className="board-table">
+    <div className="bg-white rounded-sm p-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)] w-fit max-w-full overflow-x-auto">
+      <table className="border-separate [border-spacing:1px]">
         <DateHeaderRow dates={dates} showStats={showStats} />
         <tbody>
           {habits.map(habit => (
@@ -48,35 +46,36 @@ function HabitGrid({ habits, completions, dateRange, onUpdate, onNewHabit, showS
   );
 }
 
-// Date header row component
 function DateHeaderRow({ dates, showStats }) {
   const today = new Date();
 
   return (
     <thead>
-      <tr className="date-header-row">
-        {/* Empty header for habit names */}
-        <th className="habit-name-header"></th>
+      <tr>
+        <th className="w-[130px] min-w-[130px] pr-1 pb-1 text-center p-0 align-middle"></th>
 
-        {/* Date headers */}
         {dates.map((date, index) => {
           const monthAbbr = date.toLocaleDateString('en-US', { month: 'short' });
           const isToday = isSameDay(date, today);
+          const cellClass = isToday
+            ? 'p-0.5 bg-brand-tint rounded-sm text-center pb-1 align-middle'
+            : 'p-0.5 text-center pb-1 align-middle';
           return (
-            <th key={index} className={isToday ? 'date-header-cell today' : 'date-header-cell'}>
-              <div className="date-column">
-                <div className="date-month">{monthAbbr}</div>
-                <div className="date-number">{date.getDate()}</div>
-                <div className="date-day">{getDayName(date)}</div>
+            <th key={index} className={cellClass}>
+              <div className="flex flex-col gap-px items-center">
+                <div className="text-[10px] text-ink-faint uppercase font-medium">{monthAbbr}</div>
+                <div className={`text-base font-semibold ${isToday ? 'text-brand' : 'text-ink'}`}>
+                  {date.getDate()}
+                </div>
+                <div className="text-[10px] text-ink-soft uppercase">{getDayName(date)}</div>
               </div>
             </th>
           );
         })}
 
-        {/* Stats header */}
         {showStats && (
-          <th className="stat-header-cell">
-            <span className="stat-header-label">
+          <th className="w-[60px] min-w-[60px] text-center pl-3 pb-1 p-0 align-middle">
+            <span className="text-[9px] text-ink-faint uppercase font-semibold leading-[1.3]">
               Current<br />Streak
             </span>
           </th>
@@ -86,7 +85,6 @@ function DateHeaderRow({ dates, showStats }) {
   );
 }
 
-// Table row with habit name + cells for one habit
 function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, navigate, showStats }) {
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -109,16 +107,20 @@ function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, nav
   return (
     <>
       <tr>
-        {/* First column: Habit name */}
-        <td className="habit-name-cell">
-          <div className="habit-label" onClick={handleHabitClick}>
+        <td className="w-[130px] min-w-[130px] pr-1 p-0 align-middle">
+          <div
+            className="flex items-center gap-2 cursor-pointer px-2 py-[3px] rounded-sm transition-colors h-6 group hover:bg-surface-subtle"
+            onClick={handleHabitClick}
+          >
             <div
-              className="habit-color-indicator"
+              className="w-4 h-4 rounded-[3px] flex-shrink-0"
               style={{ backgroundColor: habit.color }}
             />
-            <span className="habit-name">{habit.name}</span>
+            <span className="flex-1 text-sm text-ink font-medium overflow-hidden text-ellipsis whitespace-nowrap">
+              {habit.name}
+            </span>
             <button
-              className="btn-edit-habit"
+              className="px-2 py-1 bg-transparent border-none cursor-pointer text-lg text-ink-faint opacity-0 transition-opacity flex-shrink-0 group-hover:opacity-100 hover:!text-ink-soft"
               onClick={handleEditClick}
               title="Edit habit"
             >
@@ -127,14 +129,13 @@ function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, nav
           </div>
         </td>
 
-        {/* Date cells */}
         {dates.map((date, index) => {
           const dateStr = formatDate(date);
           const key = `${habit.id}-${dateStr}`;
           const completion = completionMap.get(key);
 
           return (
-            <td key={index} className="completion-cell-wrapper">
+            <td key={index} className="p-0 align-middle">
               <CompletionCell
                 habit={habit}
                 date={date}
@@ -146,10 +147,9 @@ function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, nav
           );
         })}
 
-        {/* Stats column */}
         {showStats && (
-          <td className="stat-cell">
-            <div className="stat-value">{stats.currentStreak}</div>
+          <td className="w-[60px] min-w-[60px] text-center pl-3 p-0 align-middle">
+            <div className="text-[11px] font-semibold text-ink">{stats.currentStreak}</div>
           </td>
         )}
       </tr>
@@ -166,7 +166,6 @@ function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, nav
   );
 }
 
-// Tally row at bottom
 function TallyTableRow({ habits, dates, completionMap, onNewHabit, showStats }) {
   const calculateDailyTally = (date) => {
     const dateStr = formatDate(date);
@@ -186,26 +185,26 @@ function TallyTableRow({ habits, dates, completionMap, onNewHabit, showStats }) 
   };
 
   return (
-    <tr className="tally-row">
-      {/* First column: New Habit button */}
-      <td className="new-habit-cell">
-        <button className="btn-new-habit" onClick={onNewHabit}>
+    <tr className="border-t-2 border-line">
+      <td className="w-[130px] min-w-[130px] pr-1 pt-2 p-0 align-middle">
+        <button
+          className="w-full px-4 py-2 bg-brand text-white border-none rounded-sm text-sm font-medium cursor-pointer transition-colors hover:bg-brand-hover"
+          onClick={onNewHabit}
+        >
           + New Habit
         </button>
       </td>
 
-      {/* Tally cells */}
       {dates.map((date, index) => {
         const completed = calculateDailyTally(date);
         return (
-          <td key={index} className="tally-cell">
-            <span className="tally-count">{completed}</span>
+          <td key={index} className="text-center pt-2 p-0 align-middle">
+            <span className="text-xs font-semibold text-ink-soft">{completed}</span>
           </td>
         );
       })}
 
-      {/* Empty stats column */}
-      {showStats && <td className="stat-cell"></td>}
+      {showStats && <td className="w-[60px] min-w-[60px] text-center pl-3 pt-2 p-0 align-middle"></td>}
     </tr>
   );
 }

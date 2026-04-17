@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../common/Header';
 import HeatmapCalendar from './HeatmapCalendar';
 import { habitService } from '../../services/habitService';
-import './HabitDetailView.css';
 
 function HabitDetailView() {
   const { id } = useParams();
@@ -40,7 +39,7 @@ function HabitDetailView() {
     return (
       <div>
         <Header />
-        <div className="loading-message">Loading...</div>
+        <div className="flex justify-center items-center h-[400px] text-ink-soft text-base">Loading...</div>
       </div>
     );
   }
@@ -49,48 +48,53 @@ function HabitDetailView() {
     return (
       <div>
         <Header />
-        <div className="error-message">Habit not found</div>
+        <div className="bg-danger-bg text-danger-text px-3 py-3 rounded mb-5 text-sm max-w-md mx-auto mt-6">
+          Habit not found
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="habit-detail">
+    <div className="min-h-screen bg-surface">
       <Header />
 
-      <div className="habit-detail-content">
-        <div className="habit-detail-header">
-          <div className="habit-title-section">
+      <div className="max-w-[1000px] mx-auto p-6">
+        <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
+          <div className="flex items-center gap-3">
             <div
-              className="habit-color-large"
+              className="w-7 h-7 rounded-md flex-shrink-0"
               style={{ backgroundColor: habit.color }}
             />
-            <h2>{habit.name}</h2>
+            <h2 className="m-0 text-2xl font-semibold text-ink">{habit.name}</h2>
           </div>
-          <button onClick={handleBack} className="btn-back">
+          <button
+            onClick={handleBack}
+            className="px-4 py-2 bg-white text-ink-soft border border-line rounded cursor-pointer text-sm transition-all hover:bg-surface-hover hover:border-line-dark"
+          >
             ← Back to Dashboard
           </button>
         </div>
 
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-value">{stats.current_streak}</div>
-            <div className="stat-label">Current Streak</div>
+        <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(160px,1fr))]">
+          <div className="bg-white rounded-sm p-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+            <div className="text-2xl font-semibold text-ink">{stats.current_streak}</div>
+            <div className="text-xs text-ink-soft uppercase tracking-wide mt-1">Current Streak</div>
           </div>
 
-          <div className="stat-card">
-            <div className="stat-value">{stats.longest_streak}</div>
-            <div className="stat-label">Longest Streak</div>
+          <div className="bg-white rounded-sm p-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+            <div className="text-2xl font-semibold text-ink">{stats.longest_streak}</div>
+            <div className="text-xs text-ink-soft uppercase tracking-wide mt-1">Longest Streak</div>
           </div>
 
-          <div className="stat-card">
-            <div className="stat-value">{stats.total_completions}</div>
-            <div className="stat-label">Total Count</div>
+          <div className="bg-white rounded-sm p-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+            <div className="text-2xl font-semibold text-ink">{stats.total_completions}</div>
+            <div className="text-xs text-ink-soft uppercase tracking-wide mt-1">Total Count</div>
           </div>
 
-          <div className="stat-card">
-            <div className="stat-value">{stats.completion_rate}%</div>
-            <div className="stat-label">Overall Rate</div>
+          <div className="bg-white rounded-sm p-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+            <div className="text-2xl font-semibold text-ink">{stats.completion_rate}%</div>
+            <div className="text-xs text-ink-soft uppercase tracking-wide mt-1">Overall Rate</div>
           </div>
         </div>
 
@@ -99,7 +103,7 @@ function HabitDetailView() {
           habitColor={habit.color}
         />
 
-        <div className="completions-info">
+        <div className="mt-4 text-sm text-ink-soft">
           <p>Tracking since {new Date(habit.created_at).toLocaleDateString()}</p>
         </div>
       </div>
