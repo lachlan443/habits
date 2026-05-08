@@ -10,9 +10,9 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
-const DATA_DIR = process.env.NODE_ENV === 'production'
-  ? '/config'
-  : path.join(__dirname, '../data');
+const DB_PATH = process.env.DB_PATH ||
+  (process.env.NODE_ENV === 'production' ? '/config/habits.db' : path.join(__dirname, '../data/habits.db'));
+const DATA_DIR = path.dirname(DB_PATH);
 
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' ? false : 'http://localhost:3000',
