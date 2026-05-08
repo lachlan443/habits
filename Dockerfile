@@ -1,7 +1,7 @@
 # Stage 1: Build React frontend
 FROM node:20-alpine AS client-builder
 
-ARG VITE_API_URL
+ARG VITE_API_URL=/api
 ENV VITE_API_URL=$VITE_API_URL
 
 WORKDIR /app/client
