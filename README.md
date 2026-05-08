@@ -20,6 +20,12 @@ A habit tracking application inspired by everyday.app, built with Express.js, Re
 - **Authentication**: Session cookies (HttpOnly, SameSite=Strict) with bcrypt
 - **Encryption**: AES-256-GCM with independent master key, PBKDF2 key derivation (600k iterations), all crypto client-side
 
+## Requirements
+
+This app uses the [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) for client-side encryption, which browsers only make available in [secure contexts](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts). This means the app **will not work over plain HTTP unless accessed via `localhost`**.
+
+For production deployments, the app must be served over HTTPS. The recommended approach is a reverse proxy like [Traefik](https://traefik.io) with automatic TLS certificate provisioning.
+
 ## Development Setup
 
 ### Prerequisites
