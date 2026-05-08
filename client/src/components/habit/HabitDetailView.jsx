@@ -3,10 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../common/Header';
 import HeatmapCalendar from './HeatmapCalendar';
 import { habitService } from '../../services/habitService';
+import { useAuth } from '../../context/AuthContext';
 
 function HabitDetailView() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { masterKey } = useAuth();
   const [habit, setHabit] = useState(null);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -15,7 +17,7 @@ function HabitDetailView() {
     try {
       setLoading(true);
       const [habitData, statsData] = await Promise.all([
-        habitService.getHabit(id),
+        habitService.getHabit(masterKey, id),
         habitService.getHabitStats(id)
       ]);
       setHabit(habitData);

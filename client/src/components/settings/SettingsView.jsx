@@ -4,12 +4,19 @@ import Header from '../common/Header';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
 import { getTimezoneList } from '../../utils/timezoneUtils';
+import {
+  generateSalt,
+  derivePasswordKey,
+  encryptMasterKey,
+  decryptMasterKey
+} from '../../services/encryption';
 
 function SettingsView() {
-  const { user, updateUser, logout } = useAuth();
+  const { user, masterKey, updateUser, logout } = useAuth();
   const navigate = useNavigate();
   const [username, setUsername] = useState(user?.username || '');
   const [timezone, setTimezone] = useState(user?.timezone || 'Australia/Sydney');
+  const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -27,7 +34,6 @@ function SettingsView() {
       setError('Username cannot be empty');
       return;
     }
-
     if (!timezone) {
       setError('Timezone cannot be empty');
       return;
@@ -65,24 +71,41 @@ function SettingsView() {
     setError('');
     setSuccess('');
 
-    if (!newPassword || !confirmPassword) {
+    if (!oldPassword || !newPassword || !confirmPassword) {
       setError('Please fill in all password fields');
       return;
     }
-
     if (newPassword !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
-
-    if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (newPassword.length < 8) {
+      setError('Password must be at least 8 characters');
       return;
     }
 
     try {
-      await authService.changePassword(newPassword);
+      // Get current encryption data to verify old password
+      const keyData = await authService.getKey();
+
+      // Verify old password by attempting to decrypt master key
+      const oldPasswordKey = await derivePasswordKey(oldPassword, keyData.encryption_salt);
+      let masterKeyBytes;
+      try {
+        masterKeyBytes = await decryptMasterKey(keyData.encrypted_master_key, oldPasswordKey);
+      } catch {
+        setError('Current password is incorrect');
+        return;
+      }
+
+      // Re-wrap master key with new password
+      const newSalt = generateSalt();
+      const newPasswordKey = await derivePasswordKey(newPassword, newSalt);
+      const newEncryptedMasterKey = await encryptMasterKey(masterKeyBytes, newPasswordKey);
+
+      await authService.changePassword(oldPassword, newPassword, newSalt, newEncryptedMasterKey);
       setSuccess('Password changed successfully');
+      setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (error) {
@@ -171,17 +194,27 @@ function SettingsView() {
 
           <form onSubmit={handleChangePassword}>
             <div className="mb-4">
+              <label className={fieldLabelClass}>Current password</label>
+              <input
+                type="password"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                placeholder="Enter current password"
+                className={inputClass}
+              />
+            </div>
+            <div className="mb-4">
               <label className={fieldLabelClass}>New password</label>
               <input
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
+                placeholder="Enter new password (min 8 characters)"
                 className={inputClass}
               />
             </div>
             <div className="mb-4">
-              <label className={fieldLabelClass}>Confirm password</label>
+              <label className={fieldLabelClass}>Confirm new password</label>
               <input
                 type="password"
                 value={confirmPassword}

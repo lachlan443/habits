@@ -1,21 +1,17 @@
-import api, { setAuthToken } from './api';
+import api from './api';
 
 export const authService = {
-  async signup(username, password, timezone) {
-    const response = await api.post('/auth/signup', { username, password, timezone });
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-      setAuthToken(response.data.token);
-    }
+  async signup(username, password, timezone, encryptionSalt, encryptedMasterKey) {
+    const response = await api.post('/auth/signup', {
+      username, password, timezone,
+      encryption_salt: encryptionSalt,
+      encrypted_master_key: encryptedMasterKey
+    });
     return response.data;
   },
 
   async login(username, password) {
     const response = await api.post('/auth/login', { username, password });
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-      setAuthToken(response.data.token);
-    }
     return response.data;
   },
 
@@ -25,12 +21,15 @@ export const authService = {
     } catch (error) {
       console.error('Logout error:', error);
     }
-    localStorage.removeItem('token');
-    setAuthToken(null);
   },
 
   async getMe() {
     const response = await api.get('/auth/me');
+    return response.data;
+  },
+
+  async getKey() {
+    const response = await api.get('/auth/key');
     return response.data;
   },
 
@@ -44,18 +43,17 @@ export const authService = {
     return response.data;
   },
 
-  async changePassword(newPassword) {
-    const response = await api.put('/auth/password', { password: newPassword });
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-      setAuthToken(response.data.token);
-    }
+  async changePassword(oldPassword, newPassword, newEncryptionSalt, newEncryptedMasterKey) {
+    const response = await api.put('/auth/password', {
+      old_password: oldPassword,
+      new_password: newPassword,
+      new_encryption_salt: newEncryptionSalt,
+      new_encrypted_master_key: newEncryptedMasterKey
+    });
     return response.data;
   },
 
   async deleteAccount() {
     await api.delete('/auth/account');
-    localStorage.removeItem('token');
-    setAuthToken(null);
   }
 };

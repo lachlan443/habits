@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../common/Header';
 import { habitService } from '../../services/habitService';
+import { useAuth } from '../../context/AuthContext';
 
 function ArchiveView() {
   const navigate = useNavigate();
+  const { masterKey } = useAuth();
   const [archivedHabits, setArchivedHabits] = useState([]);
   const [habitStats, setHabitStats] = useState({});
   const [loading, setLoading] = useState(true);
@@ -16,19 +18,15 @@ function ArchiveView() {
   const loadArchivedHabits = async () => {
     try {
       setLoading(true);
-      const habits = await habitService.getHabits(true);
+      const habits = await habitService.getHabits(masterKey, true);
       const archived = habits.filter(h => h.archived);
       setArchivedHabits(archived);
 
-      const statsPromises = archived.map(habit =>
-        habitService.getHabitStats(habit.id)
-      );
+      const statsPromises = archived.map(habit => habitService.getHabitStats(habit.id));
       const stats = await Promise.all(statsPromises);
 
       const statsMap = {};
-      archived.forEach((habit, index) => {
-        statsMap[habit.id] = stats[index];
-      });
+      archived.forEach((habit, index) => { statsMap[habit.id] = stats[index]; });
       setHabitStats(statsMap);
     } catch (error) {
       console.error('Failed to load archived habits:', error);
@@ -39,7 +37,7 @@ function ArchiveView() {
 
   const handleUnarchive = async (habitId) => {
     try {
-      await habitService.updateHabit(habitId, { archived: false });
+      await habitService.updateHabit(masterKey, habitId, { archived: false });
       await loadArchivedHabits();
     } catch (error) {
       console.error('Failed to unarchive habit:', error);
@@ -87,7 +85,7 @@ function ArchiveView() {
                     <div className="text-xs text-ink-soft mt-0.5">
                       {habit.frequency_type === 'daily'
                         ? 'Every day'
-                        : `Custom: ${JSON.parse(habit.frequency_days || '[]').join(', ')}`}
+                        : `Custom: ${(habit.frequency_days || []).join(', ')}`}
                     </div>
                   </div>
                 </div>

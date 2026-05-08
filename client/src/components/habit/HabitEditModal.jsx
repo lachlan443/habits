@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import ColorPicker from './ColorPicker';
 import FrequencySelector from './FrequencySelector';
 import { habitService } from '../../services/habitService';
+import { useAuth } from '../../context/AuthContext';
 
 function HabitEditModal({ habit, onClose, onUpdated, onDeleted }) {
+  const { masterKey } = useAuth();
   const [name, setName] = useState(habit.name);
   const [color, setColor] = useState(habit.color);
   const [frequencyType, setFrequencyType] = useState(habit.frequency_type);
@@ -36,7 +38,7 @@ function HabitEditModal({ habit, onClose, onUpdated, onDeleted }) {
         frequency_days: frequencyType === 'custom' ? frequencyDays : null
       };
 
-      await habitService.updateHabit(habit.id, updates);
+      await habitService.updateHabit(masterKey, habit.id, updates);
       onUpdated();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to update habit');
@@ -47,7 +49,7 @@ function HabitEditModal({ habit, onClose, onUpdated, onDeleted }) {
 
   const handleArchive = async () => {
     try {
-      await habitService.updateHabit(habit.id, { archived: true });
+      await habitService.updateHabit(masterKey, habit.id, { archived: true });
       onUpdated();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to archive habit');

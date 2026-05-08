@@ -11,17 +11,14 @@ A habit tracking application inspired by everyday.app, built with Express.js, Re
 - Completion rate statistics
 - Color-coded habits
 - Archive and delete habits
-- User authentication with secure password hashing
-- Per-user AES-256-GCM encryption of habit names and frequency (key derived from the user's password — the server operator cannot decrypt user data from the database alone)
-- Fully containerized with Docker
+- End-to-end encrypted habit names — the server stores only ciphertext and cannot read user data without their password
 
 ## Tech Stack
 
-- **Backend**: Express.js (Node.js 20) with SQLite database
+- **Backend**: Express.js (Node.js 20) with SQLite
 - **Frontend**: React + Vite + Tailwind CSS v4
-- **Authentication**: JWT tokens with bcrypt
-- **Encryption**: AES-256-GCM with PBKDF2 key derivation (200k iterations)
-- **Deployment**: Docker with volume persistence
+- **Authentication**: Session cookies (HttpOnly, SameSite=Strict) with bcrypt
+- **Encryption**: AES-256-GCM with independent master key, PBKDF2 key derivation (600k iterations), all crypto client-side
 
 ## Development Setup
 
@@ -31,143 +28,92 @@ A habit tracking application inspired by everyday.app, built with Express.js, Re
 
 ### Running Locally
 
-1. **Start the backend server:**
+1. **Start the backend:**
    ```bash
    npm start
    ```
-   Server will run on http://localhost:7160
+   Server runs on http://localhost:7160
 
-2. **Start the React development server (in a new terminal):**
+2. **Start the frontend (new terminal):**
    ```bash
    cd client
    npm run dev
    ```
-   Frontend will run on http://localhost:3000 and proxy API requests to port 7160
-
-3. **Access the application:**
-   Open http://localhost:3000 in your browser
+   Frontend runs on http://localhost:3000 and proxies API requests to port 7160
 
 ## Docker Deployment
 
-### Build and Run
-
 ```bash
-# Build the Docker image
-docker build -t habits-tracker --build-arg VITE_API_URL=/api .
-
-# Run with docker-compose
-docker-compose up -d
+docker compose up -d
 ```
 
-### Using Docker Compose (Recommended)
-
-The `docker-compose.yml` is configured to:
-- Mount `/home/lach/configs/habits` to `/config` in the container
-- Expose port 7160
-- Auto-restart unless stopped
-- Include health checks
-
-```yaml
-services:
-  habits:
-    build: .
-    container_name: habits
-    volumes:
-      - /home/lach/configs/habits:/config
-    ports:
-      - "7160:7160"
-    restart: unless-stopped
-```
+The `docker-compose.yml` mounts `/home/lach/configs/habits` to `/config`, exposes port 7160, and auto-restarts unless stopped.
 
 ### Data Persistence
 
-All configuration and data is stored in `/config`:
-- `/config/habits.db` - SQLite database (habit names and frequency are stored encrypted)
-- `/config/jwt_secret.txt` - JWT signing secret (auto-generated on first run)
+All data is stored in `/config`:
+- `/config/habits.db` — SQLite database (habit names stored as encrypted blobs)
+- `/config/sessions.db` — Session store
+- `/config/session_secret.txt` — Session signing secret (auto-generated on first run)
 
-This allows you to:
-- Recreate the container without losing data
-- Back up your habits by copying the `/config` directory
-- Migrate to a new server by moving the `/config` directory
+Back up or migrate by copying the `/config` directory.
 
-The JWT secret alone cannot decrypt habit data — that requires each user's password. Changing a user's password rotates their encryption key and wipes their existing habits, since old ciphertext cannot be re-keyed without the prior password.
+## Encryption Model
+
+Each user has a random master key generated at signup. The master key is encrypted with a key derived from their password (PBKDF2) and stored server-side — the server never sees the master key itself. Habit names are encrypted client-side with the master key before being sent to the server.
+
+Password changes re-wrap the master key with the new password — existing habits are never re-encrypted and no data is lost.
 
 ## Usage
 
-### First Time Setup
-
-1. Access the application at http://localhost:7160
-2. Click "Sign up" to create an account
-3. Enter a username and password (minimum 8 characters)
-4. You'll be automatically logged in
-
 ### Creating Habits
 
-1. Click "+ New Habit" button
-2. Enter habit name
-3. Choose a color from the palette
-4. Select frequency:
-   - **Every day**: Habit applies to all days
-   - **Custom**: Select specific days of the week
-5. Click "Create Habit"
+1. Click "+ New Habit"
+2. Enter a name, choose a color, and set frequency (daily or specific days)
 
-### Tracking Habits
+### Tracking
 
-- **Mark as complete**: Click an empty square
-- **Skip a day**: Click a completed square, then click "Skip"
-- **Undo**: Click any square and select "Undo"
-
-### Visual Indicators
-
-- **Filled square**: Habit completed (shown in habit's color)
-- **Diagonal lines**: Day skipped
-- **Grey square**: Non-applicable day (for custom frequency habits)
-- **Green border**: Today's date
+- **Click empty square** — mark complete
+- **Click completed square** — cycle to skipped or undo
 
 ### Viewing Statistics
 
-Click on any habit name to see:
-- Current streak
-- Longest streak
-- Total completions
-- Overall completion rate
+Click any habit name to see current streak, longest streak, total completions, and completion rate.
 
 ### Managing Habits
 
-Click the "⋯" button next to a habit to:
-- Edit name, color, or frequency
-- Archive habit (hides from dashboard, preserves data)
-- Delete habit permanently
+Click "⋯" next to a habit to edit, archive, or delete it.
 
-## API Endpoints
+## API
 
-### Authentication
-- `POST /api/auth/signup` - Create account
-- `POST /api/auth/login` - Login
-- `GET /api/auth/me` - Get current user
-- `PUT /api/auth/username` - Update username
-- `PUT /api/auth/timezone` - Update timezone
-- `PUT /api/auth/password` - Change password (rotates encryption key, wipes existing habits)
-- `DELETE /api/auth/account` - Delete account
-- `POST /api/auth/logout` - Logout
+### Auth
+- `POST /api/auth/signup`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `GET /api/auth/key` — returns encrypted master key + salt for client-side decryption
+- `PUT /api/auth/username`
+- `PUT /api/auth/timezone`
+- `PUT /api/auth/password`
+- `DELETE /api/auth/account`
 
 ### Habits
-- `GET /api/habits` - Get all habits
-- `POST /api/habits` - Create habit
-- `GET /api/habits/:id` - Get habit
-- `PUT /api/habits/:id` - Update habit
-- `DELETE /api/habits/:id` - Delete habit
-- `GET /api/habits/:id/stats` - Get habit statistics
+- `GET /api/habits`
+- `POST /api/habits`
+- `GET /api/habits/:id`
+- `PUT /api/habits/:id`
+- `DELETE /api/habits/:id`
+- `GET /api/habits/:id/stats`
 
 ### Completions
-- `GET /api/completions` - Get completions (with date range)
-- `POST /api/completions` - Create/update completion
-- `DELETE /api/completions/by-date` - Delete completion
+- `GET /api/completions`
+- `POST /api/completions`
+- `DELETE /api/completions/by-date`
 
 ## Environment Variables
 
-- `NODE_ENV` - Environment (production/development)
-- `PORT` - Server port (default: 7160)
-- `DB_PATH` - SQLite database path (default: /config/habits.db)
-- `JWT_SECRET_FILE` - Path to JWT secret file (default: /config/jwt_secret.txt)
-- `VITE_API_URL` - Build-time API base URL for the frontend (default: /api)
+- `NODE_ENV` — production/development
+- `PORT` — server port (default: 7160)
+- `DB_PATH` — SQLite database path (default: /config/habits.db)
+- `SESSION_SECRET_FILE` — path to session secret file (default: /config/session_secret.txt)
+- `VITE_API_URL` — build-time API base URL for the frontend (default: /api)

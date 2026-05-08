@@ -3,8 +3,10 @@ import ColorPicker from './ColorPicker';
 import FrequencySelector from './FrequencySelector';
 import { habitService } from '../../services/habitService';
 import { DEFAULT_COLOR } from '../../utils/colorPalette';
+import { useAuth } from '../../context/AuthContext';
 
 function HabitCreateModal({ onClose, onCreated }) {
+  const { masterKey } = useAuth();
   const [name, setName] = useState('');
   const [color, setColor] = useState(DEFAULT_COLOR);
   const [frequencyType, setFrequencyType] = useState('daily');
@@ -36,7 +38,7 @@ function HabitCreateModal({ onClose, onCreated }) {
         frequency_days: frequencyType === 'custom' ? frequencyDays : null
       };
 
-      const newHabit = await habitService.createHabit(habitData);
+      const newHabit = await habitService.createHabit(masterKey, habitData);
       onCreated(newHabit);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to create habit');

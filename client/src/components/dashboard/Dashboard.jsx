@@ -9,7 +9,7 @@ import { getTodayInTimezone, dateToUTC } from '../../utils/timezoneUtils';
 import { useAuth } from '../../context/AuthContext';
 
 function Dashboard() {
-  const { timezone } = useAuth();
+  const { timezone, masterKey } = useAuth();
   const [habits, setHabits] = useState([]);
   const [completions, setCompletions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,7 +66,7 @@ function Dashboard() {
       const endUTC = dateToUTC(dateRange.end, timezone);
 
       const [habitsData, completionsData] = await Promise.all([
-        habitService.getHabits(false),
+        habitService.getHabits(masterKey, false),
         completionService.getCompletions(startUTC, endUTC)
       ]);
       setHabits(habitsData);
