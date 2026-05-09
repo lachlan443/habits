@@ -138,7 +138,6 @@ function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, nav
                 habit={habit}
                 date={date}
                 completion={completion}
-                completions={completions}
                 onUpdate={onUpdate}
               />
             </td>
