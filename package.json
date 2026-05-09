@@ -5,7 +5,8 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "test": "jest"
   },
   "keywords": [
     "habits",
@@ -24,5 +25,8 @@
     "express-rate-limit": "^8.5.1",
     "express-session": "^1.19.0",
     "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2"
   }
 }

@@ -13,17 +13,54 @@ function formatHabit(habit) {
 
 function getHabits(req, res) {
   const includeArchived = req.query.include_archived === 'true';
-  let query = 'SELECT * FROM habits WHERE user_id = ?';
+  let habitsQuery = 'SELECT * FROM habits WHERE user_id = ?';
   const params = [req.userId];
-  if (!includeArchived) query += ' AND archived = 0';
-  query += ' ORDER BY order_index, created_at LIMIT 500';
+  if (!includeArchived) habitsQuery += ' AND archived = 0';
+  habitsQuery += ' ORDER BY order_index, created_at LIMIT 500';
 
-  db.all(query, params, (err, habits) => {
-    if (err) {
-      console.error('Get habits error:', err);
-      return res.status(500).json({ error: 'Failed to fetch habits' });
-    }
-    res.json({ habits: habits.map(formatHabit) });
+  db.get('SELECT timezone FROM users WHERE id = ?', [req.userId], (err, user) => {
+    if (err) return res.status(500).json({ error: 'Failed to fetch habits' });
+    const userTimezone = user?.timezone || 'Australia/Sydney';
+
+    db.all(habitsQuery, params, (err, habits) => {
+      if (err) {
+        console.error('Get habits error:', err);
+        return res.status(500).json({ error: 'Failed to fetch habits' });
+      }
+
+      if (habits.length === 0) return res.json({ habits: [] });
+
+      const habitIds = habits.map(h => h.id);
+      const placeholders = habitIds.map(() => '?').join(',');
+
+      db.all(
+        `SELECT * FROM completions WHERE habit_id IN (${placeholders}) ORDER BY date`,
+        habitIds,
+        (err, completions) => {
+          if (err) {
+            console.error('Get completions for stats error:', err);
+            return res.status(500).json({ error: 'Failed to fetch habits' });
+          }
+
+          const completionsByHabit = new Map();
+          completions.forEach(c => {
+            if (!completionsByHabit.has(c.habit_id)) completionsByHabit.set(c.habit_id, []);
+            completionsByHabit.get(c.habit_id).push(c);
+          });
+
+          const habitsWithStats = habits.map(habit => {
+            const formatted = formatHabit(habit);
+            const habitCompletions = completionsByHabit.get(habit.id) || [];
+            const { currentStreak, longestStreak } = calculateStreaks(formatted, habitCompletions, userTimezone);
+            const completionRate = calculateCompletionRate(formatted, habitCompletions, userTimezone);
+            const totalCompletions = habitCompletions.filter(c => c.status === 'completed').length;
+            return { ...formatted, current_streak: currentStreak, longest_streak: longestStreak, completion_rate: completionRate, total_completions: totalCompletions };
+          });
+
+          res.json({ habits: habitsWithStats });
+        }
+      );
+    });
   });
 }
 

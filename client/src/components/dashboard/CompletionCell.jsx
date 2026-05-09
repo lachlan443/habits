@@ -1,47 +1,17 @@
 import React, { useRef } from 'react';
 import { completionService } from '../../services/completionService';
-import { formatDate, isSameDay, addDays } from '../../utils/dateUtils';
-import { dateToUTC, getTodayInTimezone } from '../../utils/timezoneUtils';
+import { formatDate, isSameDay } from '../../utils/dateUtils';
+import { getTodayInTimezone } from '../../utils/timezoneUtils';
 import { isHabitApplicable } from '../../utils/frequencyUtils';
 import { useAuth } from '../../context/AuthContext';
 
-function CompletionCell({ habit, date, completion, onUpdate, completions }) {
+function CompletionCell({ habit, date, completion, onUpdate }) {
   const { timezone } = useAuth();
   const isApplicable = isHabitApplicable(habit, date);
   const isToday = isSameDay(date, getTodayInTimezone(timezone));
   const isUpdating = useRef(false);
 
-  const calculateStreakForDate = () => {
-    if (completion?.status !== 'completed') return 0;
-
-    let streak = 1;
-    let checkDate = addDays(date, -1);
-
-    for (let i = 0; i < 365; i++) {
-      if (!isHabitApplicable(habit, checkDate)) {
-        checkDate = addDays(checkDate, -1);
-        continue;
-      }
-
-      const checkDateStr = formatDate(checkDate);
-      const prevCompletion = completions?.find(
-        c => c.habit_id === habit.id && c.date === checkDateStr
-      );
-
-      if (prevCompletion && (prevCompletion.status === 'completed' || prevCompletion.status === 'skipped')) {
-        if (prevCompletion.status === 'completed') {
-          streak++;
-        }
-        checkDate = addDays(checkDate, -1);
-      } else {
-        break;
-      }
-    }
-
-    return streak;
-  };
-
-  const streak = calculateStreakForDate();
+  const streak = completion?.status === 'completed' ? (habit.current_streak ?? 0) : 0;
 
   const getDarkenedColor = (baseColor, streakLength) => {
     if (streakLength === 0) return baseColor;
@@ -67,22 +37,22 @@ function CompletionCell({ habit, date, completion, onUpdate, completions }) {
     isUpdating.current = true;
 
     try {
-      const dateUTC = dateToUTC(date, timezone);
+      const dateStr = formatDate(date);
 
       if (!completion) {
         await completionService.createCompletion({
           habit_id: habit.id,
-          date: dateUTC,
+          date: dateStr,
           status: 'completed'
         });
       } else if (completion.status === 'completed') {
         await completionService.createCompletion({
           habit_id: habit.id,
-          date: dateUTC,
+          date: dateStr,
           status: 'skipped'
         });
       } else if (completion.status === 'skipped') {
-        await completionService.deleteCompletionByDate(habit.id, dateUTC);
+        await completionService.deleteCompletionByDate(habit.id, dateStr);
       }
       await onUpdate();
     } catch (error) {
