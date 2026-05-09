@@ -5,13 +5,13 @@ import { getTodayInTimezone } from '../../utils/timezoneUtils';
 import { isHabitApplicable } from '../../utils/frequencyUtils';
 import { useAuth } from '../../context/AuthContext';
 
-function CompletionCell({ habit, date, completion, onUpdate }) {
+function CompletionCell({ habit, date, completion, daysFromRight, onUpdate }) {
   const { timezone } = useAuth();
   const isApplicable = isHabitApplicable(habit, date);
   const isToday = isSameDay(date, getTodayInTimezone(timezone));
   const isUpdating = useRef(false);
 
-  const streak = completion?.status === 'completed' ? (habit.current_streak ?? 0) : 0;
+  const streak = completion?.status === 'completed' ? Math.max(0, (habit.current_streak ?? 0) - daysFromRight) : 0;
 
   const getDarkenedColor = (baseColor, streakLength) => {
     if (streakLength === 0) return baseColor;

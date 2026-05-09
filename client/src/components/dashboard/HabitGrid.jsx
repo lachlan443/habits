@@ -171,6 +171,7 @@ function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, nav
           const dateStr = formatDate(date);
           const key = `${habit.id}-${dateStr}`;
           const completion = completionMap.get(key);
+          const daysFromRight = dates.length - 1 - index;
 
           return (
             <td key={index} className="p-0 align-middle">
@@ -178,6 +179,7 @@ function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, nav
                 habit={habit}
                 date={date}
                 completion={completion}
+                daysFromRight={daysFromRight}
                 onUpdate={onUpdate}
               />
             </td>
