@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import CompletionCell from './CompletionCell';
 import HabitEditModal from '../habit/HabitEditModal';
 import { formatDate, getDateRange, isSameDay, getDayName } from '../../utils/dateUtils';
-import { calculateHabitStats } from '../../utils/statisticsUtils';
 import { isHabitApplicable } from '../../utils/frequencyUtils';
 
 function HabitGrid({ habits, completions, dateRange, onUpdate, onNewHabit, showStats }) {
@@ -102,7 +101,6 @@ function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, nav
     onUpdate();
   };
 
-  const stats = showStats ? calculateHabitStats(habit, completions) : null;
 
   return (
     <>
@@ -149,7 +147,7 @@ function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, nav
 
         {showStats && (
           <td className="w-[60px] min-w-[60px] text-center pl-3 p-0 align-middle">
-            <div className="text-[11px] font-semibold text-ink">{stats.currentStreak}</div>
+            <div className="text-[11px] font-semibold text-ink">{habit.current_streak}</div>
           </td>
         )}
       </tr>
