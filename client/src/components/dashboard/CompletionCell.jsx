@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { completionService } from '../../services/completionService';
 import { formatDate, isSameDay } from '../../utils/dateUtils';
-import { dateToUTC, getTodayInTimezone } from '../../utils/timezoneUtils';
+import { getTodayInTimezone } from '../../utils/timezoneUtils';
 import { isHabitApplicable } from '../../utils/frequencyUtils';
 import { useAuth } from '../../context/AuthContext';
 
@@ -37,22 +37,22 @@ function CompletionCell({ habit, date, completion, onUpdate }) {
     isUpdating.current = true;
 
     try {
-      const dateUTC = dateToUTC(date, timezone);
+      const dateStr = formatDate(date);
 
       if (!completion) {
         await completionService.createCompletion({
           habit_id: habit.id,
-          date: dateUTC,
+          date: dateStr,
           status: 'completed'
         });
       } else if (completion.status === 'completed') {
         await completionService.createCompletion({
           habit_id: habit.id,
-          date: dateUTC,
+          date: dateStr,
           status: 'skipped'
         });
       } else if (completion.status === 'skipped') {
-        await completionService.deleteCompletionByDate(habit.id, dateUTC);
+        await completionService.deleteCompletionByDate(habit.id, dateStr);
       }
       await onUpdate();
     } catch (error) {

@@ -4,8 +4,8 @@ import HabitGrid from './HabitGrid';
 import HabitCreateModal from '../habit/HabitCreateModal';
 import { habitService } from '../../services/habitService';
 import { completionService } from '../../services/completionService';
-import { addDays, isSameDay } from '../../utils/dateUtils';
-import { getTodayInTimezone, dateToUTC } from '../../utils/timezoneUtils';
+import { addDays, isSameDay, formatDate } from '../../utils/dateUtils';
+import { getTodayInTimezone } from '../../utils/timezoneUtils';
 import { useAuth } from '../../context/AuthContext';
 
 function Dashboard() {
@@ -62,12 +62,9 @@ function Dashboard() {
       if (showLoading) {
         setLoading(true);
       }
-      const startUTC = dateToUTC(dateRange.start, timezone);
-      const endUTC = dateToUTC(dateRange.end, timezone);
-
       const [habitsData, completionsData] = await Promise.all([
         habitService.getHabits(masterKey, false),
-        completionService.getCompletions(startUTC, endUTC)
+        completionService.getCompletions(formatDate(dateRange.start), formatDate(dateRange.end))
       ]);
       setHabits(habitsData);
       setCompletions(completionsData);
