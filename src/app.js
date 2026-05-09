@@ -11,6 +11,8 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 const DB_PATH = process.env.DB_PATH ||
   (process.env.NODE_ENV === 'production' ? '/config/habits.db' : path.join(__dirname, '../data/habits.db'));
 const DATA_DIR = path.dirname(DB_PATH);
