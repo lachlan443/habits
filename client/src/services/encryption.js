@@ -30,7 +30,7 @@ export async function derivePasswordKey(password, saltBase64) {
 }
 
 export async function importRawKey(rawBytes) {
-  return crypto.subtle.importKey('raw', rawBytes, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+  return crypto.subtle.importKey('raw', rawBytes, { name: 'AES-GCM' }, true, ['encrypt', 'decrypt']);
 }
 
 async function encryptWithKey(plaintext, cryptoKey) {

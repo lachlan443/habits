@@ -20,6 +20,12 @@ A habit tracking application inspired by everyday.app, built with Express.js, Re
 - **Authentication**: Session cookies (HttpOnly, SameSite=Strict) with bcrypt
 - **Encryption**: AES-256-GCM with independent master key, PBKDF2 key derivation (600k iterations), all crypto client-side
 
+## Requirements
+
+This app uses the [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) for client-side encryption, which browsers only expose in [secure contexts](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts). The app **will not work over plain HTTP unless accessed via `localhost`**.
+
+For production deployments the app must be served over HTTPS. The recommended approach is a reverse proxy like [Traefik](https://traefik.io) with automatic TLS certificate provisioning.
+
 ## Development Setup
 
 ### Prerequisites
@@ -48,6 +54,19 @@ docker compose up -d
 ```
 
 The `docker-compose.yml` mounts `/home/lach/configs/habits` to `/config`, exposes port 7160, and auto-restarts unless stopped.
+
+### Local Docker Testing
+
+The production image runs with `NODE_ENV=production`, which sets the `Secure` flag on session cookies. Browsers won't send Secure cookies over plain HTTP, so the session will appear to work after login but all subsequent requests will get a 401.
+
+To test locally, override `NODE_ENV` at runtime:
+
+```bash
+docker build -t habits-test .
+docker run --rm -p 7161:7160 -e NODE_ENV=development habits-test
+```
+
+Then open `http://localhost:7161`. This disables the Secure cookie flag for the local session while leaving all other production behaviour intact.
 
 ### Data Persistence
 

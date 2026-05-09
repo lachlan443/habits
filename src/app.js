@@ -3,6 +3,7 @@ const cors = require('cors');
 const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
 const path = require('path');
+const fs = require('fs');
 const authRoutes = require('./routes/auth.routes');
 const habitRoutes = require('./routes/habits.routes');
 const completionRoutes = require('./routes/completions.routes');
@@ -10,9 +11,9 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
-const DATA_DIR = process.env.NODE_ENV === 'production'
-  ? '/config'
-  : path.join(__dirname, '../data');
+const DB_PATH = process.env.DB_PATH ||
+  (process.env.NODE_ENV === 'production' ? '/config/habits.db' : path.join(__dirname, '../data/habits.db'));
+const DATA_DIR = path.dirname(DB_PATH);
 
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' ? false : 'http://localhost:3000',
@@ -52,11 +53,12 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../public')));
+const publicDir = path.join(__dirname, '../public');
+if (fs.existsSync(publicDir)) {
+  app.use(express.static(publicDir));
   app.use((req, res, next) => {
     if (req.path.startsWith('/api/')) return next();
-    res.sendFile(path.join(__dirname, '../public', 'index.html'));
+    res.sendFile(path.join(publicDir, 'index.html'));
   });
 }
 
