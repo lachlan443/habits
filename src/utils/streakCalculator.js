@@ -69,9 +69,7 @@ function calculateStreaks(habit, completions, userTimezone) {
     const dateStr = formatDate(checkDate);
 
     if (!isHabitApplicable(habit, checkDate)) {
-      // Skip non-applicable days
       checkDate.setUTCDate(checkDate.getUTCDate() - 1);
-      isFirstDay = false;
       continue;
     }
 

@@ -29,7 +29,7 @@ function Dashboard() {
     const padding = 120;
     const boardPadding = 16;
 
-    const shouldShowStats = viewportWidth >= 1200;
+    const shouldShowStats = viewportWidth >= 600;
     setShowStats(shouldShowStats);
 
     const fixedWidth = habitLabelWidth + (shouldShowStats ? statsColumnsWidth : 0) + padding + boardPadding;
