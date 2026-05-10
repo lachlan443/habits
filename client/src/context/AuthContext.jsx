@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { authService } from '../services/authService';
+import { refreshCsrfToken } from '../services/api';
 import {
   generateSalt,
   generateMasterKey,
@@ -19,7 +20,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkAuth();
+    refreshCsrfToken().then(checkAuth);
   }, []);
 
   const checkAuth = async () => {
@@ -48,6 +49,7 @@ export function AuthProvider({ children }) {
     setMasterKey(masterCryptoKey);
     setUser(data.user);
     setNeedsKeyRestore(false);
+    await refreshCsrfToken();
     return data;
   };
 
@@ -71,6 +73,7 @@ export function AuthProvider({ children }) {
     setMasterKey(null);
     setUser(null);
     setNeedsKeyRestore(false);
+    await refreshCsrfToken();
   };
 
   const unlockWithPassword = async (password) => {

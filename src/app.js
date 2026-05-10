@@ -3,6 +3,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
+const { doubleCsrf } = require('csrf-csrf');
 const path = require('path');
 const fs = require('fs');
 const authRoutes = require('./routes/auth.routes');
@@ -49,6 +50,22 @@ app.use((req, res, next) => {
   next();
 });
 
+const { generateToken, doubleCsrfProtection } = doubleCsrf({
+  getSecret: () => process.env.SESSION_SECRET,
+  cookieName: 'csrf-token',
+  cookieOptions: {
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/'
+  }
+});
+
+app.get('/api/csrf-token', (req, res) => {
+  res.json({ token: generateToken(req, res) });
+});
+
+app.use(doubleCsrfProtection);
 app.use('/api/auth', authRoutes);
 app.use('/api/habits', habitRoutes);
 app.use('/api/completions', completionRoutes);
