@@ -15,6 +15,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 20
+          cache: 'npm'
 
       - name: Audit backend
         run: npm audit --audit-level=high
