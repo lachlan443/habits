@@ -54,6 +54,7 @@ app.use((req, res, next) => {
 
 const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
   getSecret: () => process.env.SESSION_SECRET,
+  getSessionIdentifier: (req) => req.session.id,
   cookieName: 'csrf-token',
   cookieOptions: {
     httpOnly: true,
