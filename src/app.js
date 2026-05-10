@@ -1,6 +1,7 @@
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
 const { doubleCsrf } = require('csrf-csrf');
@@ -27,6 +28,7 @@ app.use(cors({
 
 app.use(express.json({ limit: '16kb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.use(session({
   store: new SQLiteStore({

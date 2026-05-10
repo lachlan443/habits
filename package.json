@@ -17,6 +17,7 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "connect-sqlite3": "^0.9.16",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "csrf-csrf": "^4.0.3",
     "date-fns": "^4.1.0",
@@ -29,6 +30,7 @@
     "sqlite3": "^6.0.1"
   },
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
     "@types/helmet": "^4.0.0",
     "jest": "^30.4.2"
   },
