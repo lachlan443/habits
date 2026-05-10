@@ -68,8 +68,17 @@ const perUserApiLimiter = rateLimit({
   skip: (req) => !req.session.userId
 });
 
+const csrfTokenLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: { error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 app.use('/api/', apiLimiter);
 app.use('/api/', perUserApiLimiter);
+app.get('/api/csrf-token', csrfTokenLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/habits', habitRoutes);
 app.use('/api/completions', completionRoutes);
