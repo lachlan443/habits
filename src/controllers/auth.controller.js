@@ -1,5 +1,10 @@
+const bcrypt = require('bcrypt');
 const db = require('../config/database');
 const { hashPassword, verifyPassword } = require('../services/authService');
+
+// Pre-computed dummy hash used to ensure constant-time response when a
+// username does not exist, preventing username enumeration via timing.
+const DUMMY_HASH = bcrypt.hashSync('dummy-password-for-timing', 10);
 
 async function signup(req, res) {
   const { username, password, timezone, encryption_salt, encrypted_master_key } = req.body;
@@ -25,7 +30,7 @@ async function signup(req, res) {
       function(err) {
         if (err) {
           if (err.message.includes('UNIQUE constraint failed')) {
-            return res.status(409).json({ error: 'Could not create account' });
+            return res.status(409).json({ error: 'Registration failed' });
           }
           console.error('Signup error:', err);
           return res.status(500).json({ error: 'Failed to create user' });
@@ -60,7 +65,8 @@ async function login(req, res) {
         return res.status(500).json({ error: 'Login failed' });
       }
       if (!user) {
-        return res.status(401).json({ error: 'Invalid username or password' });
+        await bcrypt.compare(password, DUMMY_HASH);
+        return res.status(401).json({ error: 'Invalid credentials' });
       }
       try {
         const isValid = await verifyPassword(password, user.password_hash);
