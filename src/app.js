@@ -62,7 +62,7 @@ const { generateToken, doubleCsrfProtection } = doubleCsrf({
 });
 
 app.get('/api/csrf-token', (req, res) => {
-  res.json({ token: generateToken(req, res) });
+  res.json({ token: generateToken(req, res, false) });
 });
 
 app.use(doubleCsrfProtection);
