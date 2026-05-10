@@ -131,7 +131,6 @@ function updateUsername(req, res) {
         }
         return res.status(500).json({ error: 'Failed to update username' });
       }
-      if (this.changes === 0) return res.status(404).json({ error: 'User not found' });
       res.json({ message: 'Username updated successfully', username: username.trim() });
     }
   );
