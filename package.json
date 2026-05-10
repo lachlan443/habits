@@ -24,9 +24,11 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.1",
     "express-session": "^1.19.0",
+    "helmet": "^8.1.0",
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {
+    "@types/helmet": "^4.0.0",
     "jest": "^30.4.2"
   }
 }
