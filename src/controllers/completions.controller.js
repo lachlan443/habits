@@ -168,15 +168,12 @@ function deleteCompletionByDate(req, res) {
   const userId = req.userId;
   const { habit_id, date } = req.body;
 
-  console.log('DELETE /completions/by-date called with:', { habit_id, date, userId });
-
   if (!habit_id || !date) {
     return res.status(400).json({
       error: 'habit_id and date are required'
     });
   }
 
-  // Check if habit belongs to user
   db.get(
     'SELECT * FROM habits WHERE id = ? AND user_id = ?',
     [habit_id, userId],
@@ -187,41 +184,23 @@ function deleteCompletionByDate(req, res) {
       }
 
       if (!habit) {
-        console.log('Habit not found for id:', habit_id, 'user:', userId);
         return res.status(404).json({ error: 'Habit not found' });
       }
 
-      console.log('Habit found, attempting to delete completion...');
-
-      // First check if completion exists
-      db.get(
-        'SELECT * FROM completions WHERE habit_id = ? AND date = ?',
+      db.run(
+        'DELETE FROM completions WHERE habit_id = ? AND date = ?',
         [habit_id, date],
-        (err, existing) => {
+        function(err) {
           if (err) {
-            console.error('Check completion error:', err);
-          } else {
-            console.log('Existing completion:', existing);
+            console.error('Delete completion error:', err);
+            return res.status(500).json({ error: 'Failed to delete completion' });
           }
 
-          db.run(
-            'DELETE FROM completions WHERE habit_id = ? AND date = ?',
-            [habit_id, date],
-            function(err) {
-              if (err) {
-                console.error('Delete completion error:', err);
-                return res.status(500).json({ error: 'Failed to delete completion' });
-              }
+          if (this.changes === 0) {
+            return res.status(404).json({ error: 'Completion not found' });
+          }
 
-              console.log('Delete result - changes:', this.changes);
-
-              if (this.changes === 0) {
-                return res.status(404).json({ error: 'Completion not found' });
-              }
-
-              res.status(204).send();
-            }
-          );
+          res.status(204).send();
         }
       );
     }

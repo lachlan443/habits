@@ -1,4 +1,5 @@
 const express = require('express');
+const helmet = require('helmet');
 const cors = require('cors');
 const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
@@ -12,6 +13,7 @@ const errorHandler = require('./middleware/errorHandler');
 const app = express();
 
 app.set('trust proxy', 1);
+app.use(helmet());
 
 const DB_PATH = process.env.DB_PATH ||
   (process.env.NODE_ENV === 'production' ? '/config/habits.db' : path.join(__dirname, '../data/habits.db'));

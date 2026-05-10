@@ -2,6 +2,8 @@ const db = require('../config/database');
 const { calculateStreaks, calculateCompletionRate } = require('../utils/streakCalculator');
 
 const MAX_NAME_BYTES = 512;
+const VALID_COLOR = /^#[0-9a-fA-F]{6}$/;
+const VALID_DAYS = new Set(['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']);
 
 function formatHabit(habit) {
   return {
@@ -88,6 +90,12 @@ function createHabit(req, res) {
   if (frequency_type === 'custom' && (!frequency_days || !Array.isArray(frequency_days))) {
     return res.status(400).json({ error: 'frequency_days array is required for custom frequency' });
   }
+  if (frequency_days && (!Array.isArray(frequency_days) || frequency_days.some(d => !VALID_DAYS.has(d)))) {
+    return res.status(400).json({ error: 'Invalid habit data' });
+  }
+  if (!VALID_COLOR.test(color)) {
+    return res.status(400).json({ error: 'Invalid habit data' });
+  }
   if (Buffer.byteLength(name, 'utf8') > MAX_NAME_BYTES) {
     return res.status(400).json({ error: 'Invalid habit data' });
   }
@@ -115,6 +123,13 @@ function updateHabit(req, res) {
     if (!habit) return res.status(404).json({ error: 'Habit not found' });
 
     if (name !== undefined && Buffer.byteLength(name, 'utf8') > MAX_NAME_BYTES) {
+      return res.status(400).json({ error: 'Invalid habit data' });
+    }
+    if (color !== undefined && !VALID_COLOR.test(color)) {
+      return res.status(400).json({ error: 'Invalid habit data' });
+    }
+    if (frequency_days !== undefined && frequency_days !== null &&
+        (!Array.isArray(frequency_days) || frequency_days.some(d => !VALID_DAYS.has(d)))) {
       return res.status(400).json({ error: 'Invalid habit data' });
     }
 
