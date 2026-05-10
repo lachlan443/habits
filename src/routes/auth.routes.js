@@ -12,9 +12,19 @@ const authLimiter = rateLimit({
   legacyHeaders: false
 });
 
+const perUsernameLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  keyGenerator: (req) => `login:${(req.body.username || '').toLowerCase()}`,
+  message: { error: 'Too many attempts, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => !req.body.username
+});
+
 // Public routes
 router.post('/signup', authLimiter, authController.signup);
-router.post('/login', authLimiter, authController.login);
+router.post('/login', authLimiter, perUsernameLimiter, authController.login);
 
 // Protected routes
 router.get('/me', authMiddleware, authController.getMe);

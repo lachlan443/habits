@@ -52,13 +52,24 @@ app.use((req, res, next) => {
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: 1000,
   message: { error: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false
 });
 
+const perUserApiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  keyGenerator: (req) => `user:${req.session.userId}`,
+  message: { error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => !req.session.userId
+});
+
 app.use('/api/', apiLimiter);
+app.use('/api/', perUserApiLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/habits', habitRoutes);
 app.use('/api/completions', completionRoutes);
