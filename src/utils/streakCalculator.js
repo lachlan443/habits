@@ -26,11 +26,11 @@ function dateFromStr(str) {
   return new Date(Date.UTC(y, m - 1, d));
 }
 
-function calculateStreaks(habit, completions, userTimezone, todayStr = null) {
+function calculateStreaks(habit, completions, userTimezone) {
   const completionMap = new Map();
   completions.forEach(c => completionMap.set(c.date, c.status));
 
-  const today = dateFromStr(todayStr || getTodayInTimezone(userTimezone || 'UTC'));
+  const today = dateFromStr(getTodayInTimezone(userTimezone || 'UTC'));
 
   let currentStreak = 0;
   let longestStreak = 0;
@@ -90,11 +90,11 @@ function calculateStreaks(habit, completions, userTimezone, todayStr = null) {
   return { currentStreak, longestStreak };
 }
 
-function calculateCompletionRate(habit, completions, userTimezone, todayStr = null) {
+function calculateCompletionRate(habit, completions, userTimezone) {
   const completionMap = new Map();
   completions.forEach(c => completionMap.set(c.date, c.status));
 
-  const today = dateFromStr(todayStr || getTodayInTimezone(userTimezone || 'UTC'));
+  const today = dateFromStr(getTodayInTimezone(userTimezone || 'UTC'));
   const createdDate = dateFromStr(habit.created_at.split(' ')[0]);
 
   let applicableDays = 0;

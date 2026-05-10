@@ -35,7 +35,7 @@ describe('getTodayInTimezone', () => {
   });
 });
 
-describe('calculateStreaks without todayStr (uses getTodayInTimezone)', () => {
+describe('calculateStreaks uses getTodayInTimezone', () => {
   test('8-day streak is not 0 at 4pm Sydney when completions exist for past 8 days', () => {
     const completions = [
       '2026-05-02', '2026-05-03', '2026-05-04', '2026-05-05',
