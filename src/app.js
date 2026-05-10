@@ -28,7 +28,6 @@ app.use(cors({
 
 app.use(express.json({ limit: '16kb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
 
 app.use(session({
   store: new SQLiteStore({
@@ -46,6 +45,8 @@ app.use(session({
     maxAge: 7 * 24 * 60 * 60 * 1000
   }
 }));
+
+app.use(cookieParser());
 
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);

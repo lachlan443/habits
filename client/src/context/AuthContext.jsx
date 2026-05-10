@@ -64,6 +64,7 @@ export function AuthProvider({ children }) {
     setMasterKey(masterCryptoKey);
     setUser(data.user);
     setNeedsKeyRestore(false);
+    await refreshCsrfToken();
     return data;
   };
 
