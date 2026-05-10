@@ -171,7 +171,6 @@ function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, nav
           const dateStr = formatDate(date);
           const key = `${habit.id}-${dateStr}`;
           const completion = completionMap.get(key);
-
           return (
             <td key={index} className="p-0 align-middle">
               <CompletionCell

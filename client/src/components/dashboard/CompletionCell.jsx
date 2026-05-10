@@ -8,10 +8,15 @@ import { useAuth } from '../../context/AuthContext';
 function CompletionCell({ habit, date, completion, onUpdate }) {
   const { timezone } = useAuth();
   const isApplicable = isHabitApplicable(habit, date);
-  const isToday = isSameDay(date, getTodayInTimezone(timezone));
+  const today = getTodayInTimezone(timezone);
+  const isToday = isSameDay(date, today);
   const isUpdating = useRef(false);
 
-  const streak = completion?.status === 'completed' ? (habit.current_streak ?? 0) : 0;
+  const todayDateStr = formatDate(today);
+  const cellDateStr = formatDate(date);
+  const toLocalDate = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const daysFromToday = Math.max(0, Math.round((toLocalDate(todayDateStr) - toLocalDate(cellDateStr)) / 86400000));
+  const streak = completion?.status === 'completed' ? Math.max(0, (habit.current_streak ?? 0) - daysFromToday) : 0;
 
   const getDarkenedColor = (baseColor, streakLength) => {
     if (streakLength === 0) return baseColor;
