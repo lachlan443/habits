@@ -12,6 +12,12 @@ function get(sql, params = []) {
   });
 }
 
+function all(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
+  });
+}
+
 function hasColumn(table, column) {
   return new Promise((resolve) => {
     db.all(`PRAGMA table_info(${table})`, (err, rows) => {
@@ -84,6 +90,24 @@ async function runMigrations() {
       console.log('v2 migration: cleared all user data (incompatible encryption scheme)');
     }
     await run(`INSERT OR IGNORE INTO schema_migrations (version) VALUES (2)`);
+  }
+
+  // v3: assign sequential order_index per user based on created_at
+  const v3Applied = await get(`SELECT version FROM schema_migrations WHERE version = 3`);
+  if (!v3Applied) {
+    const habits = await all('SELECT id, user_id FROM habits ORDER BY user_id, created_at');
+    const userGroups = new Map();
+    habits.forEach(h => {
+      if (!userGroups.has(h.user_id)) userGroups.set(h.user_id, []);
+      userGroups.get(h.user_id).push(h.id);
+    });
+    for (const [, ids] of userGroups) {
+      for (let i = 0; i < ids.length; i++) {
+        await run('UPDATE habits SET order_index = ? WHERE id = ?', [i, ids[i]]);
+      }
+    }
+    await run(`INSERT OR IGNORE INTO schema_migrations (version) VALUES (3)`);
+    if (habits.length > 0) console.log('v3 migration: assigned order_index to existing habits');
   }
 
   await run(`UPDATE users SET timezone = 'Australia/Sydney' WHERE timezone IS NULL`);

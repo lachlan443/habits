@@ -112,6 +112,17 @@ function Dashboard() {
     await loadData(false);
   };
 
+  const handleReorder = async (newOrderIds) => {
+    const habitMap = new Map(habits.map(h => [h.id, h]));
+    setHabits(newOrderIds.map(id => habitMap.get(id)));
+    try {
+      await habitService.reorderHabits(newOrderIds);
+    } catch (error) {
+      console.error('Failed to reorder habits:', error);
+      await loadData(false);
+    }
+  };
+
   const navBtnClass = "px-4 py-2 bg-transparent border border-line rounded cursor-pointer text-lg transition-all hover:bg-surface-hover hover:border-line-dark disabled:opacity-50 disabled:cursor-not-allowed";
 
   if (loading) {
@@ -153,6 +164,7 @@ function Dashboard() {
           dateRange={dateRange}
           onUpdate={loadData}
           onNewHabit={() => setShowCreateModal(true)}
+          onReorder={handleReorder}
           showStats={showStats}
         />
       </div>

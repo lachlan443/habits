@@ -1,13 +1,30 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import CompletionCell from './CompletionCell';
 import HabitEditModal from '../habit/HabitEditModal';
 import { formatDate, getDateRange, isSameDay, getDayName } from '../../utils/dateUtils';
 import { isHabitApplicable } from '../../utils/frequencyUtils';
 
-function HabitGrid({ habits, completions, dateRange, onUpdate, onNewHabit, showStats }) {
+function HabitGrid({ habits, completions, dateRange, onUpdate, onNewHabit, onReorder, showStats }) {
   const dates = getDateRange(dateRange.start, dateRange.end);
   const navigate = useNavigate();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
 
   const completionMap = new Map();
   completions.forEach(c => {
@@ -15,31 +32,45 @@ function HabitGrid({ habits, completions, dateRange, onUpdate, onNewHabit, showS
     completionMap.set(key, c);
   });
 
+  const handleDragEnd = ({ active, over }) => {
+    if (!over || active.id === over.id) return;
+    const oldIndex = habits.findIndex(h => h.id === active.id);
+    const newIndex = habits.findIndex(h => h.id === over.id);
+    const reordered = [...habits];
+    const [moved] = reordered.splice(oldIndex, 1);
+    reordered.splice(newIndex, 0, moved);
+    onReorder(reordered.map(h => h.id));
+  };
+
   return (
     <div className="bg-white rounded-sm p-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)] w-fit max-w-full overflow-x-auto">
       <table className="border-separate [border-spacing:1px]">
         <DateHeaderRow dates={dates} showStats={showStats} />
-        <tbody>
-          {habits.map(habit => (
-            <HabitTableRow
-              key={habit.id}
-              habit={habit}
-              dates={dates}
-              completionMap={completionMap}
-              completions={completions}
-              onUpdate={onUpdate}
-              navigate={navigate}
-              showStats={showStats}
-            />
-          ))}
-          <TallyTableRow
-            habits={habits}
-            dates={dates}
-            completionMap={completionMap}
-            onNewHabit={onNewHabit}
-            showStats={showStats}
-          />
-        </tbody>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={habits.map(h => h.id)} strategy={verticalListSortingStrategy}>
+            <tbody>
+              {habits.map(habit => (
+                <HabitTableRow
+                  key={habit.id}
+                  habit={habit}
+                  dates={dates}
+                  completionMap={completionMap}
+                  completions={completions}
+                  onUpdate={onUpdate}
+                  navigate={navigate}
+                  showStats={showStats}
+                />
+              ))}
+              <TallyTableRow
+                habits={habits}
+                dates={dates}
+                completionMap={completionMap}
+                onNewHabit={onNewHabit}
+                showStats={showStats}
+              />
+            </tbody>
+          </SortableContext>
+        </DndContext>
       </table>
     </div>
   );
@@ -87,6 +118,8 @@ function DateHeaderRow({ dates, showStats }) {
 function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, navigate, showStats }) {
   const [showEditModal, setShowEditModal] = useState(false);
 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: habit.id });
+
   const handleHabitClick = () => {
     navigate(`/habit/${habit.id}`);
   };
@@ -101,14 +134,21 @@ function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, nav
     onUpdate();
   };
 
+  const rowStyle = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   return (
     <>
-      <tr>
+      <tr ref={setNodeRef} style={rowStyle}>
         <td className="w-[130px] min-w-[130px] pr-1 p-0 align-middle">
           <div
-            className="flex items-center gap-2 cursor-pointer px-2 py-[3px] rounded-sm transition-colors h-6 group hover:bg-surface-subtle"
+            className="flex items-center gap-2 cursor-grab px-2 py-[3px] rounded-sm transition-colors h-6 group hover:bg-surface-subtle"
             onClick={handleHabitClick}
+            {...attributes}
+            {...listeners}
           >
             <div
               className="w-4 h-4 rounded-[3px] flex-shrink-0"

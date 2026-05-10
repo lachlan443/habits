@@ -10,6 +10,7 @@ router.get('/', habitsController.getHabits);
 router.get('/:id', habitsController.getHabit);
 router.get('/:id/stats', habitsController.getHabitStats);
 router.post('/', habitsController.createHabit);
+router.put('/reorder', habitsController.reorderHabits);
 router.put('/:id', habitsController.updateHabit);
 router.delete('/:id', habitsController.deleteHabit);
 

@@ -5,8 +5,8 @@ ARG VITE_API_URL=/api
 ENV VITE_API_URL=$VITE_API_URL
 
 WORKDIR /app/client
-COPY client/package*.json ./
-RUN npm ci
+COPY client/package.json ./
+RUN npm install
 COPY client/ ./
 RUN npm run build
 

@@ -7,9 +7,7 @@ const { format } = require('date-fns');
  * @returns {string} Today's date in user's timezone
  */
 function getTodayInTimezone(timezone) {
-  const now = new Date();
-  const zonedNow = toZonedTime(now, timezone);
-  return formatInTimeZone(zonedNow, timezone, 'yyyy-MM-dd');
+  return formatInTimeZone(new Date(), timezone, 'yyyy-MM-dd');
 }
 
 /**
