@@ -1,5 +1,6 @@
 const db = require('../config/database');
 const { calculateStreaks, calculateCompletionRate } = require('../utils/streakCalculator');
+const { computeReorder } = require('../utils/reorderHabits');
 
 const MAX_NAME_BYTES = 512;
 const VALID_COLOR = /^#[0-9a-fA-F]{6}$/;
@@ -102,17 +103,22 @@ function createHabit(req, res) {
 
   const freqDaysJson = frequency_days ? JSON.stringify(frequency_days) : null;
 
-  db.run(
-    'INSERT INTO habits (user_id, name, color, frequency_type, frequency_days) VALUES (?, ?, ?, ?, ?)',
-    [req.userId, name, color, frequency_type, freqDaysJson],
-    function(err) {
-      if (err) return res.status(500).json({ error: 'Failed to create habit' });
-      db.get('SELECT * FROM habits WHERE id = ?', [this.lastID], (err, habit) => {
-        if (err) return res.status(500).json({ error: 'Failed to fetch created habit' });
-        res.status(201).json({ habit: formatHabit(habit) });
-      });
-    }
-  );
+  db.get('SELECT COALESCE(MAX(order_index) + 1, 0) AS next_index FROM habits WHERE user_id = ? AND archived = 0', [req.userId], (err, row) => {
+    if (err) return res.status(500).json({ error: 'Failed to create habit' });
+    const nextIndex = row.next_index;
+
+    db.run(
+      'INSERT INTO habits (user_id, name, color, frequency_type, frequency_days, order_index) VALUES (?, ?, ?, ?, ?, ?)',
+      [req.userId, name, color, frequency_type, freqDaysJson, nextIndex],
+      function(err) {
+        if (err) return res.status(500).json({ error: 'Failed to create habit' });
+        db.get('SELECT * FROM habits WHERE id = ?', [this.lastID], (err, habit) => {
+          if (err) return res.status(500).json({ error: 'Failed to fetch created habit' });
+          res.status(201).json({ habit: formatHabit(habit) });
+        });
+      }
+    );
+  });
 }
 
 function updateHabit(req, res) {
@@ -205,4 +211,48 @@ function getHabitStats(req, res) {
   });
 }
 
-module.exports = { getHabits, getHabit, createHabit, updateHabit, deleteHabit, getHabitStats };
+function reorderHabits(req, res) {
+  const { habitIds } = req.body;
+
+  if (!Array.isArray(habitIds) || habitIds.length === 0) {
+    return res.status(400).json({ error: 'habitIds must be a non-empty array' });
+  }
+  if (!habitIds.every(id => Number.isInteger(id) && id > 0)) {
+    return res.status(400).json({ error: 'All habitIds must be positive integers' });
+  }
+
+  const placeholders = habitIds.map(() => '?').join(',');
+  db.all(
+    `SELECT id FROM habits WHERE user_id = ? AND id IN (${placeholders}) AND archived = 0`,
+    [req.userId, ...habitIds],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: 'Failed to reorder habits' });
+      if (rows.length !== habitIds.length) {
+        return res.status(400).json({ error: 'Invalid habit IDs' });
+      }
+
+      let updates;
+      try {
+        updates = computeReorder(rows, habitIds);
+      } catch (e) {
+        return res.status(400).json({ error: e.message });
+      }
+
+      db.serialize(() => {
+        db.run('BEGIN TRANSACTION');
+        updates.forEach(({ id, order_index }) => {
+          db.run(
+            'UPDATE habits SET order_index = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?',
+            [order_index, id, req.userId]
+          );
+        });
+        db.run('COMMIT', (err) => {
+          if (err) return res.status(500).json({ error: 'Failed to reorder habits' });
+          res.json({ message: 'Habits reordered successfully' });
+        });
+      });
+    }
+  );
+}
+
+module.exports = { getHabits, getHabit, createHabit, updateHabit, deleteHabit, getHabitStats, reorderHabits };

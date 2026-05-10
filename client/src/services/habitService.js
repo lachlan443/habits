@@ -39,6 +39,10 @@ export const habitService = {
     return { ...habit, name: await decryptHabitName(habit.name, masterKey) };
   },
 
+  async reorderHabits(habitIds) {
+    await api.put('/habits/reorder', { habitIds });
+  },
+
   async deleteHabit(id) {
     await api.delete(`/habits/${id}`);
   },
