@@ -21,7 +21,7 @@ function Dashboard() {
   });
 
   const calculateDays = useCallback(() => {
-    const nameWidth = Math.max(90, Math.min(Math.round(window.innerWidth * 0.35), 220));
+    const nameWidth = Math.max(90, Math.min(Math.round(window.innerWidth * 0.5), 220));
     const outerPadding = 20;  // 10px each side
     const tablePadding = 16;  // p-2
     const statsWidth = 68;    // 60px col + border spacing

@@ -18,7 +18,7 @@ import HabitEditModal from '../habit/HabitEditModal';
 import { formatDate, getDateRange, isSameDay, getDayName } from '../../utils/dateUtils';
 import { isHabitApplicable } from '../../utils/frequencyUtils';
 function nameColumnWidth() {
-  return Math.max(90, Math.min(Math.round(window.innerWidth * 0.35), 220));
+  return Math.max(90, Math.min(Math.round(window.innerWidth * 0.5), 220));
 }
 
 function HabitGrid({ habits, completions, dateRange, onUpdate, onNewHabit, onReorder, showStats }) {
@@ -88,7 +88,7 @@ function DateHeaderRow({ dates, showStats, nameColWidth }) {
   return (
     <thead>
       <tr>
-        <th style={{ width: nameColWidth, minWidth: nameColWidth }} className="pr-1 pb-1 text-center p-0 align-middle"></th>
+        <th style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth, overflow: 'hidden' }} className="pr-1 pb-1 text-center p-0 align-middle"></th>
 
         {dates.map((date, index) => {
           const monthAbbr = date.toLocaleDateString('en-US', { month: 'short' });
@@ -149,7 +149,7 @@ function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, nav
   return (
     <>
       <tr ref={setNodeRef} style={rowStyle}>
-        <td style={{ width: nameColWidth, minWidth: nameColWidth }} className="pr-1 p-0 align-middle">
+        <td style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth, overflow: 'hidden' }} className="pr-1 p-0 align-middle">
           <div
             className="flex items-center gap-2 cursor-grab px-2 py-[3px] rounded-sm transition-colors h-6 group hover:bg-surface-subtle"
             onClick={handleHabitClick}
@@ -228,7 +228,7 @@ function TallyTableRow({ habits, dates, completionMap, onNewHabit, showStats, na
 
   return (
     <tr className="border-t-2 border-line">
-      <td style={{ width: nameColWidth, minWidth: nameColWidth }} className="pr-1 pt-2 p-0 align-middle">
+      <td style={{ width: nameColWidth, minWidth: nameColWidth, maxWidth: nameColWidth, overflow: 'hidden' }} className="pr-1 pt-2 p-0 align-middle">
         <button
           className="w-full px-4 py-2 bg-brand text-white border-none rounded-sm text-sm font-medium cursor-pointer transition-colors hover:bg-brand-hover"
           onClick={onNewHabit}
