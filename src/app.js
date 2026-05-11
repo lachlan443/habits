@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
 const { doubleCsrf } = require('csrf-csrf');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
 const authRoutes = require('./routes/auth.routes');
@@ -65,8 +66,37 @@ const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
   }
 });
 
-app.get('/api/csrf-token', (req, res) => {
-  const token = generateCsrfToken(req, res, false);
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  message: { error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const perUserApiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  keyGenerator: (req) => `user:${req.session.userId}`,
+  message: { error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => !req.session.userId
+});
+
+const csrfTokenLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: { error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+app.use('/api/', apiLimiter);
+app.use('/api/', perUserApiLimiter);
+
+app.get('/api/csrf-token', csrfTokenLimiter, (req, res) => {
+  const token = generateCsrfToken(req, res, { overwrite: false });
   req.session.save(() => res.json({ token }));
 });
 
