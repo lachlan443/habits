@@ -160,7 +160,7 @@ function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, nav
               className="w-4 h-4 rounded-[3px] flex-shrink-0"
               style={{ backgroundColor: habit.color }}
             />
-            <span className="flex-1 text-sm text-ink font-medium overflow-hidden text-ellipsis whitespace-nowrap" title={habit.name}>
+            <span className="flex-1 min-w-0 text-sm text-ink font-medium overflow-hidden text-ellipsis whitespace-nowrap" title={habit.name}>
               {habit.name}
             </span>
             <button
