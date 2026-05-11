@@ -48,7 +48,7 @@ function HabitGrid({ habits, completions, dateRange, onUpdate, onNewHabit, onReo
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <div className="bg-white rounded-sm p-[5px] shadow-[0_1px_2px_rgba(0,0,0,0.05)] w-fit max-w-full overflow-x-auto">
+      <div className="bg-white rounded-sm py-2 px-[5px] shadow-[0_1px_2px_rgba(0,0,0,0.05)] w-fit max-w-full overflow-x-auto">
         <table className="border-separate [border-spacing:1px]">
           <DateHeaderRow dates={dates} showStats={showStats} nameColWidth={nameColWidth} />
           <SortableContext items={habits.map(h => h.id)} strategy={verticalListSortingStrategy}>
