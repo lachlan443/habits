@@ -95,7 +95,7 @@ function HabitEditModal({ habit, onClose, onUpdated, onDeleted }) {
 
           <div className="mb-5">
             <div className="flex justify-between items-baseline mb-1.5">
-              <label className={fieldLabelClass} style={{marginBottom: 0}}>Habit Name</label>
+              <label className={`${fieldLabelClass} mb-0`}>Habit Name</label>
               <span className={`text-xs ${name.length >= maxLength ? 'text-danger' : 'text-ink-faint'}`}>
                 {name.length}/{maxLength}
               </span>
