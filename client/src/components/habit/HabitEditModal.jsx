@@ -5,7 +5,8 @@ import { habitService } from '../../services/habitService';
 import { useAuth } from '../../context/AuthContext';
 
 function HabitEditModal({ habit, onClose, onUpdated, onDeleted }) {
-  const { masterKey } = useAuth();
+  const { masterKey, preferences } = useAuth();
+  const maxLength = preferences.habitNameMaxLength;
   const [name, setName] = useState(habit.name);
   const [color, setColor] = useState(habit.color);
   const [frequencyType, setFrequencyType] = useState(habit.frequency_type);
@@ -93,12 +94,18 @@ function HabitEditModal({ habit, onClose, onUpdated, onDeleted }) {
           )}
 
           <div className="mb-5">
-            <label className={fieldLabelClass}>Habit Name</label>
+            <div className="flex justify-between items-baseline mb-1.5">
+              <label className={fieldLabelClass} style={{marginBottom: 0}}>Habit Name</label>
+              <span className={`text-xs ${name.length >= maxLength ? 'text-danger' : 'text-ink-faint'}`}>
+                {name.length}/{maxLength}
+              </span>
+            </div>
             <input
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value.slice(0, maxLength))}
               placeholder="e.g., Exercise, Read, Meditate"
+              maxLength={maxLength}
               className={inputClass}
             />
           </div>

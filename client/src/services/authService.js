@@ -55,5 +55,15 @@ export const authService = {
 
   async deleteAccount() {
     await api.delete('/auth/account');
+  },
+
+  async getPreferences() {
+    const response = await api.get('/auth/preferences');
+    return response.data.preferences;
+  },
+
+  async updatePreferences(patch) {
+    const response = await api.put('/auth/preferences', patch);
+    return response.data.preferences;
   }
 };

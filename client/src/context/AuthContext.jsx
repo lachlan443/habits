@@ -9,6 +9,7 @@ import {
   importRawKey
 } from '../services/encryption';
 import { writeCache, readCache, clearCache } from '../services/keyCache';
+import { DEFAULT_PREFERENCES } from '../config/preferences';
 
 const AuthContext = createContext();
 
@@ -17,6 +18,7 @@ export function AuthProvider({ children }) {
   const [masterKey, setMasterKey] = useState(null);
   const [needsKeyRestore, setNeedsKeyRestore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
 
   useEffect(() => {
     checkAuth();
@@ -24,8 +26,12 @@ export function AuthProvider({ children }) {
 
   const checkAuth = async () => {
     try {
-      const data = await authService.getMe();
-      setUser(data.user);
+      const [meData, prefs] = await Promise.all([
+        authService.getMe(),
+        authService.getPreferences()
+      ]);
+      setUser(meData.user);
+      setPreferences(prefs);
       const cachedKey = await readCache();
       if (cachedKey) {
         setMasterKey(cachedKey);
@@ -48,6 +54,8 @@ export function AuthProvider({ children }) {
     setMasterKey(masterCryptoKey);
     setUser(data.user);
     setNeedsKeyRestore(false);
+    const prefs = await authService.getPreferences();
+    setPreferences(prefs);
     return data;
   };
 
@@ -62,6 +70,8 @@ export function AuthProvider({ children }) {
     setMasterKey(masterCryptoKey);
     setUser(data.user);
     setNeedsKeyRestore(false);
+    const prefs = await authService.getPreferences();
+    setPreferences(prefs);
     return data;
   };
 
@@ -70,7 +80,14 @@ export function AuthProvider({ children }) {
     await clearCache();
     setMasterKey(null);
     setUser(null);
+    setPreferences(DEFAULT_PREFERENCES);
     setNeedsKeyRestore(false);
+  };
+
+  const updatePreferences = async (patch) => {
+    const updated = await authService.updatePreferences(patch);
+    setPreferences(updated);
+    return updated;
   };
 
   const unlockWithPassword = async (password) => {
@@ -95,6 +112,8 @@ export function AuthProvider({ children }) {
     logout,
     unlockWithPassword,
     updateUser,
+    preferences,
+    updatePreferences,
     timezone: user?.timezone || 'Australia/Sydney'
   };
 
