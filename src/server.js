@@ -24,6 +24,10 @@ const { runMigrations } = require('./db/migrations');
 async function start() {
   try {
     await runMigrations();
+    if (process.env.NODE_ENV !== 'production') {
+      const { seedDevUser } = require('./db/seed');
+      await seedDevUser();
+    }
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);

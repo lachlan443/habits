@@ -1,5 +1,5 @@
 # Stage 1: Build React frontend
-FROM node:20-alpine AS client-builder
+FROM node:24-alpine AS client-builder
 
 ARG VITE_API_URL=/api
 ENV VITE_API_URL=$VITE_API_URL
@@ -11,7 +11,7 @@ COPY client/ ./
 RUN npm run build
 
 # Stage 2: Build Express backend and final image
-FROM node:20-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 
