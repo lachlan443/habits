@@ -17,17 +17,12 @@ import CompletionCell from './CompletionCell';
 import HabitEditModal from '../habit/HabitEditModal';
 import { formatDate, getDateRange, isSameDay, getDayName } from '../../utils/dateUtils';
 import { isHabitApplicable } from '../../utils/frequencyUtils';
-import { useAuth } from '../../context/AuthContext';
-
-function nameColumnWidth(displayLength) {
-  // color dot (16) + gap (8) + cell padding (16) + edit btn (24) = 64px overhead
-  // ~8px per char at text-sm
-  return Math.max(90, Math.min(displayLength * 8 + 64, 220));
+function nameColumnWidth() {
+  return Math.max(90, Math.min(Math.round(window.innerWidth * 0.35), 220));
 }
 
 function HabitGrid({ habits, completions, dateRange, onUpdate, onNewHabit, onReorder, showStats }) {
-  const { preferences } = useAuth();
-  const nameColWidth = nameColumnWidth(preferences.habitNameDisplayLength);
+  const nameColWidth = nameColumnWidth();
   const dates = getDateRange(dateRange.start, dateRange.end);
   const navigate = useNavigate();
 
@@ -68,7 +63,6 @@ function HabitGrid({ habits, completions, dateRange, onUpdate, onNewHabit, onReo
                   onUpdate={onUpdate}
                   navigate={navigate}
                   showStats={showStats}
-                  displayLength={preferences.habitNameDisplayLength}
                   nameColWidth={nameColWidth}
                 />
               ))}
@@ -127,11 +121,8 @@ function DateHeaderRow({ dates, showStats, nameColWidth }) {
   );
 }
 
-function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, navigate, showStats, displayLength, nameColWidth }) {
+function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, navigate, showStats, nameColWidth }) {
   const [showEditModal, setShowEditModal] = useState(false);
-  const displayName = habit.name.length > displayLength
-    ? habit.name.slice(0, displayLength) + '…'
-    : habit.name;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: habit.id });
 
@@ -169,8 +160,8 @@ function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, nav
               className="w-4 h-4 rounded-[3px] flex-shrink-0"
               style={{ backgroundColor: habit.color }}
             />
-            <span className="flex-1 text-sm text-ink font-medium overflow-hidden text-ellipsis whitespace-nowrap" title={habit.name.length > displayLength ? habit.name : undefined}>
-              {displayName}
+            <span className="flex-1 text-sm text-ink font-medium overflow-hidden text-ellipsis whitespace-nowrap" title={habit.name}>
+              {habit.name}
             </span>
             <button
               className="px-2 py-1 bg-transparent border-none cursor-pointer text-lg text-ink-faint opacity-0 transition-opacity flex-shrink-0 group-hover:opacity-100 hover:!text-ink-soft"

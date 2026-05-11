@@ -9,7 +9,7 @@ import { getTodayInTimezone } from '../../utils/timezoneUtils';
 import { useAuth } from '../../context/AuthContext';
 
 function Dashboard() {
-  const { timezone, masterKey, preferences } = useAuth();
+  const { timezone, masterKey } = useAuth();
   const [habits, setHabits] = useState([]);
   const [completions, setCompletions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,15 +21,14 @@ function Dashboard() {
   });
 
   const calculateDays = useCallback(() => {
-    const displayLength = preferences?.habitNameDisplayLength ?? 20;
-    const nameWidth = Math.max(90, Math.min(displayLength * 8 + 64, 220));
+    const nameWidth = Math.max(90, Math.min(Math.round(window.innerWidth * 0.35), 220));
     const outerPadding = 20;  // 10px each side
     const tablePadding = 16;  // p-2
     const statsWidth = 68;    // 60px col + border spacing
     const dateWidth = 36;     // 35px cell + 1px border spacing
     const available = window.innerWidth - outerPadding - tablePadding - nameWidth - statsWidth;
     return Math.max(1, Math.min(Math.floor(available / dateWidth), 60));
-  }, [preferences?.habitNameDisplayLength]);
+  }, []);
 
   useEffect(() => {
     const updateLayout = () => {

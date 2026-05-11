@@ -12,7 +12,7 @@ import {
 } from '../../services/encryption';
 
 function SettingsView() {
-  const { user, masterKey, updateUser, logout, preferences, updatePreferences } = useAuth();
+  const { user, masterKey, updateUser, logout } = useAuth();
   const navigate = useNavigate();
   const [username, setUsername] = useState(user?.username || '');
   const [timezone, setTimezone] = useState(user?.timezone || 'Australia/Sydney');
@@ -22,7 +22,6 @@ function SettingsView() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [displayLength, setDisplayLength] = useState(preferences.habitNameDisplayLength);
 
   const timezones = getTimezoneList();
 
@@ -111,23 +110,6 @@ function SettingsView() {
       setConfirmPassword('');
     } catch (error) {
       setError(error.response?.data?.error || 'Failed to change password');
-    }
-  };
-
-  const handleSavePreferences = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    const val = parseInt(displayLength, 10);
-    if (isNaN(val) || val < 5 || val > 128) {
-      setError('Display length must be between 5 and 128');
-      return;
-    }
-    try {
-      await updatePreferences({ habitNameDisplayLength: val });
-      setSuccess('Preferences saved');
-    } catch {
-      setError('Failed to save preferences');
     }
   };
 
@@ -239,29 +221,6 @@ function SettingsView() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm new password"
                 className={inputClass}
-              />
-            </div>
-            <button type="submit" className={btnSave}>Save</button>
-          </form>
-        </div>
-
-        <div className={sectionClass}>
-          <h3 className="m-0 mb-1 text-lg font-semibold text-ink">Preferences</h3>
-          <p className="mt-1 mb-4 text-sm text-ink-soft">Customize how habits are displayed</p>
-
-          <form onSubmit={handleSavePreferences}>
-            <div className="mb-4">
-              <label className={fieldLabelClass}>Habit name display length</label>
-              <p className="text-xs text-ink-faint mb-2">
-                Names longer than this are truncated with … on the dashboard. The full name is always stored and shown in details.
-              </p>
-              <input
-                type="number"
-                min={5}
-                max={128}
-                value={displayLength}
-                onChange={(e) => setDisplayLength(e.target.value)}
-                className={`${inputClass} w-24`}
               />
             </div>
             <button type="submit" className={btnSave}>Save</button>

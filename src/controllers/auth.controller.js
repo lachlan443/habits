@@ -198,9 +198,7 @@ function deleteAccount(req, res) {
   });
 }
 
-const DEFAULT_PREFERENCES = {
-  habitNameDisplayLength: 20
-};
+const DEFAULT_PREFERENCES = {};
 
 function mergePreferences(stored) {
   try {
