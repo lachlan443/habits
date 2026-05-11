@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 function UnlockScreen() {
-  const { unlockWithPassword, logout } = useAuth();
+  const { unlockWithPassword, logout, user } = useAuth();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,37 +23,33 @@ function UnlockScreen() {
   };
 
   return (
-    <div style={{
-      display: 'flex', justifyContent: 'center', alignItems: 'center',
-      height: '100vh', flexDirection: 'column', gap: '16px'
-    }}>
-      <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Re-enter your password to unlock</h2>
-      <p style={{ margin: 0, color: '#666', fontSize: '0.9rem' }}>Your session is still active, but the encryption key needs to be restored.</p>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '280px' }}>
+    <div className="flex justify-center items-center min-h-screen flex-col gap-4 px-6">
+      <h2 className="m-0 text-xl font-semibold text-ink">Re-enter your password to unlock</h2>
+      {user?.username && (
+        <p className="m-0 text-sm text-ink-soft">Signed in as <span className="font-medium text-ink">{user.username}</span></p>
+      )}
+      <p className="m-0 text-sm text-ink-soft text-center max-w-xs">Your session is still active, but the encryption key needs to be restored.</p>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3 w-full max-w-[280px]">
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
           autoFocus
-          style={{ padding: '10px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '1rem' }}
+          className="px-3 py-2.5 rounded border border-line text-base focus:outline-none focus:border-brand"
         />
-        {error && <p style={{ margin: 0, color: '#e53e3e', fontSize: '0.875rem' }}>{error}</p>}
+        {error && <p className="m-0 text-danger text-sm">{error}</p>}
         <button
           type="submit"
           disabled={loading || !password}
-          style={{
-            padding: '10px', borderRadius: '6px', border: 'none',
-            background: '#3182ce', color: 'white', fontSize: '1rem',
-            cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1
-          }}
+          className="py-2.5 rounded border-none bg-brand text-white text-base cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed hover:bg-brand-hover"
         >
           {loading ? 'Unlocking...' : 'Unlock'}
         </button>
         <button
           type="button"
           onClick={logout}
-          style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: '0.875rem' }}
+          className="bg-transparent border-none text-ink-soft cursor-pointer text-sm hover:text-ink"
         >
           Sign out instead
         </button>
@@ -67,7 +63,7 @@ function ProtectedRoute({ children }) {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: '#666' }}>
+      <div className="flex justify-center items-center h-screen text-ink-soft">
         Loading...
       </div>
     );

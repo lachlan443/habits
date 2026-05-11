@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 
 function HabitCreateModal({ onClose, onCreated }) {
   const { masterKey } = useAuth();
+  const MAX_STORAGE = 128;
   const [name, setName] = useState('');
   const [color, setColor] = useState(DEFAULT_COLOR);
   const [frequencyType, setFrequencyType] = useState('daily');
@@ -73,8 +74,9 @@ function HabitCreateModal({ onClose, onCreated }) {
             <input
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value.slice(0, MAX_STORAGE))}
               placeholder="e.g., Exercise, Read, Meditate"
+              maxLength={MAX_STORAGE}
               autoFocus
               className={inputClass}
             />

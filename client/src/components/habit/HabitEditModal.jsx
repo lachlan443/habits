@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 
 function HabitEditModal({ habit, onClose, onUpdated, onDeleted }) {
   const { masterKey } = useAuth();
+  const MAX_STORAGE = 128;
   const [name, setName] = useState(habit.name);
   const [color, setColor] = useState(habit.color);
   const [frequencyType, setFrequencyType] = useState(habit.frequency_type);
@@ -97,8 +98,9 @@ function HabitEditModal({ habit, onClose, onUpdated, onDeleted }) {
             <input
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value.slice(0, MAX_STORAGE))}
               placeholder="e.g., Exercise, Read, Meditate"
+              maxLength={MAX_STORAGE}
               className={inputClass}
             />
           </div>

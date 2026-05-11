@@ -198,4 +198,41 @@ function deleteAccount(req, res) {
   });
 }
 
-module.exports = { signup, login, getMe, getKey, logout, updateUsername, updateTimezone, changePassword, deleteAccount };
+const DEFAULT_PREFERENCES = {};
+
+function mergePreferences(stored) {
+  try {
+    return { ...DEFAULT_PREFERENCES, ...JSON.parse(stored || '{}') };
+  } catch {
+    return { ...DEFAULT_PREFERENCES };
+  }
+}
+
+function getPreferences(req, res) {
+  db.get('SELECT preferences FROM users WHERE id = ?', [req.userId], (err, row) => {
+    if (err || !row) return res.status(500).json({ error: 'Failed to get preferences' });
+    res.json({ preferences: mergePreferences(row.preferences) });
+  });
+}
+
+function updatePreferences(req, res) {
+  const incoming = req.body;
+  if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
+    return res.status(400).json({ error: 'Preferences must be a JSON object' });
+  }
+
+  db.get('SELECT preferences FROM users WHERE id = ?', [req.userId], (err, row) => {
+    if (err || !row) return res.status(500).json({ error: 'Failed to get preferences' });
+    const merged = { ...mergePreferences(row.preferences), ...incoming };
+    db.run(
+      'UPDATE users SET preferences = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [JSON.stringify(merged), req.userId],
+      (err) => {
+        if (err) return res.status(500).json({ error: 'Failed to update preferences' });
+        res.json({ preferences: merged });
+      }
+    );
+  });
+}
+
+module.exports = { signup, login, getMe, getKey, logout, updateUsername, updateTimezone, changePassword, deleteAccount, getPreferences, updatePreferences };

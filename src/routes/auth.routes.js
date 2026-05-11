@@ -24,5 +24,7 @@ router.put('/username', authMiddleware, authController.updateUsername);
 router.put('/timezone', authMiddleware, authController.updateTimezone);
 router.put('/password', authMiddleware, authController.changePassword);
 router.delete('/account', authMiddleware, authController.deleteAccount);
+router.get('/preferences', authMiddleware, authController.getPreferences);
+router.put('/preferences', authMiddleware, authController.updatePreferences);
 
 module.exports = router;

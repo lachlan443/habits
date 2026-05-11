@@ -15,35 +15,24 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [daysToShow, setDaysToShow] = useState(14);
-  const [showStats, setShowStats] = useState(true);
   const [dateRange, setDateRange] = useState({
     start: addDays(getTodayInTimezone(timezone), -13),
     end: getTodayInTimezone(timezone)
   });
 
-  const calculateDaysToShow = useCallback(() => {
-    const viewportWidth = window.innerWidth;
-    const habitLabelWidth = 130;
-    const statsColumnsWidth = 72;
-    const dateColumnWidth = 35;
-    const padding = 120;
-    const boardPadding = 16;
-
-    const shouldShowStats = viewportWidth >= 600;
-    setShowStats(shouldShowStats);
-
-    const fixedWidth = habitLabelWidth + (shouldShowStats ? statsColumnsWidth : 0) + padding + boardPadding;
-    const availableWidth = viewportWidth - fixedWidth;
-    const days = Math.floor(availableWidth / dateColumnWidth);
-
-    const safeDays = Math.max(7, days - 1);
-
-    return Math.max(7, Math.min(safeDays, 60));
+  const calculateDays = useCallback(() => {
+    const nameWidth = Math.max(90, Math.min(Math.round(window.innerWidth * 0.5), 220));
+    const outerPadding = 10;  // 5px each side
+    const tablePadding = 10;  // p-[5px]
+    const statsWidth = 68;    // 60px col + border spacing
+    const dateWidth = 36;     // 35px cell + 1px border spacing
+    const available = window.innerWidth - outerPadding - tablePadding - nameWidth - statsWidth;
+    return Math.max(1, Math.min(Math.floor(available / dateWidth), 60));
   }, []);
 
   useEffect(() => {
-    const updateDays = () => {
-      const days = calculateDaysToShow();
+    const updateLayout = () => {
+      const days = calculateDays();
       setDaysToShow(days);
       const today = getTodayInTimezone(timezone);
       setDateRange({
@@ -52,10 +41,10 @@ function Dashboard() {
       });
     };
 
-    updateDays();
-    window.addEventListener('resize', updateDays);
-    return () => window.removeEventListener('resize', updateDays);
-  }, [calculateDaysToShow, timezone]);
+    updateLayout();
+    window.addEventListener('resize', updateLayout);
+    return () => window.removeEventListener('resize', updateLayout);
+  }, [calculateDays, timezone]);
 
   const loadData = useCallback(async (showLoading = false) => {
     try {
@@ -83,19 +72,18 @@ function Dashboard() {
 
   const navigateNext = () => {
     const today = getTodayInTimezone(timezone);
-    const newEnd = addDays(dateRange.end, 7);
+    const newEnd = addDays(dateRange.end, daysToShow);
     const cappedEnd = newEnd > today ? today : newEnd;
-
     setDateRange({
-      start: addDays(dateRange.start, 7),
+      start: addDays(dateRange.start, daysToShow),
       end: cappedEnd
     });
   };
 
   const navigatePrev = () => {
     setDateRange({
-      start: addDays(dateRange.start, -7),
-      end: addDays(dateRange.end, -7)
+      start: addDays(dateRange.start, -daysToShow),
+      end: addDays(dateRange.end, -daysToShow)
     });
   };
 
@@ -123,8 +111,6 @@ function Dashboard() {
     }
   };
 
-  const navBtnClass = "px-4 py-2 bg-transparent border border-line rounded cursor-pointer text-lg transition-all hover:bg-surface-hover hover:border-line-dark disabled:opacity-50 disabled:cursor-not-allowed";
-
   if (loading) {
     return (
       <div className="min-h-screen">
@@ -140,21 +126,26 @@ function Dashboard() {
     <div className="min-h-screen bg-surface">
       <Header />
 
-      <div className="mx-auto p-3 overflow-x-hidden flex flex-col items-center max-w-full">
-        <div className="flex justify-center items-center gap-3 mb-2">
-          <button onClick={navigatePrev} className={navBtnClass}>&larr;</button>
+      <div className="mx-auto px-[5px] py-3 overflow-x-hidden flex flex-col items-center max-w-full">
+        <div className="inline-flex items-center bg-white border border-line rounded-lg shadow-sm mb-3 overflow-hidden">
+          <button
+            onClick={navigatePrev}
+            className="px-3 py-2 text-ink-soft hover:bg-surface-hover hover:text-ink transition-colors border-r border-line"
+          >
+            ‹
+          </button>
           <button
             onClick={goToToday}
-            className="px-4 py-2 bg-white border border-line rounded cursor-pointer text-sm transition-all hover:bg-surface-hover hover:border-line-dark"
+            className="px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-hover hover:text-ink transition-colors"
           >
             Today
           </button>
           <button
             onClick={navigateNext}
-            className={navBtnClass}
             disabled={isSameDay(dateRange.end, getTodayInTimezone(timezone))}
+            className="px-3 py-2 text-ink-soft hover:bg-surface-hover hover:text-ink transition-colors border-l border-line disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            &rarr;
+            ›
           </button>
         </div>
 
@@ -165,7 +156,7 @@ function Dashboard() {
           onUpdate={loadData}
           onNewHabit={() => setShowCreateModal(true)}
           onReorder={handleReorder}
-          showStats={showStats}
+          showStats={true}
         />
       </div>
 

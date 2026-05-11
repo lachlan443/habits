@@ -15,7 +15,7 @@ A habit tracking application inspired by everyday.app, built with Express.js, Re
 
 ## Tech Stack
 
-- **Backend**: Express.js (Node.js 20) with SQLite
+- **Backend**: Express.js (Node.js 22+) with SQLite
 - **Frontend**: React + Vite + Tailwind CSS v4
 - **Authentication**: Session cookies (HttpOnly, SameSite=Strict) with bcrypt
 - **Encryption**: AES-256-GCM with independent master key, PBKDF2 key derivation (600k iterations), all crypto client-side
@@ -29,23 +29,20 @@ For production deployments the app must be served over HTTPS. The recommended ap
 ## Development Setup
 
 ### Prerequisites
-- Node.js 20+
+- Node.js 22+
 - npm
 
 ### Running Locally
 
-1. **Start the backend:**
-   ```bash
-   npm start
-   ```
-   Server runs on http://localhost:7160
+```bash
+npm run dev
+```
 
-2. **Start the frontend (new terminal):**
-   ```bash
-   cd client
-   npm run dev
-   ```
-   Frontend runs on http://localhost:3000 and proxies API requests to port 7160
+This installs all dependencies (root and client), then starts both servers concurrently:
+- **Frontend**: http://localhost:3000 — open this in your browser
+- **Backend**: http://localhost:7161 — API only, do not open directly
+
+The frontend Vite dev server proxies all `/api` requests to the backend. A dev user is seeded automatically on first run: **username: `admin`, password: `password`**.
 
 ## Docker Deployment
 

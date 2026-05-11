@@ -79,6 +79,9 @@ async function runMigrations() {
   if (!await hasColumn('users', 'encryption_salt')) {
     await run(`ALTER TABLE users ADD COLUMN encryption_salt TEXT`);
   }
+  if (!await hasColumn('users', 'preferences')) {
+    await run(`ALTER TABLE users ADD COLUMN preferences TEXT NOT NULL DEFAULT '{}'`);
+  }
 
   // v2: client-side encryption with independent master key.
   // Old habits encrypted with a server-side key cannot be decrypted under the new scheme.
