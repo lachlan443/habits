@@ -19,8 +19,15 @@ import { formatDate, getDateRange, isSameDay, getDayName } from '../../utils/dat
 import { isHabitApplicable } from '../../utils/frequencyUtils';
 import { useAuth } from '../../context/AuthContext';
 
+function nameColumnWidth(displayLength) {
+  // color dot (16) + gap (8) + cell padding (16) + edit btn (24) = 64px overhead
+  // ~8px per char at text-sm
+  return Math.max(90, Math.min(displayLength * 8 + 64, 220));
+}
+
 function HabitGrid({ habits, completions, dateRange, onUpdate, onNewHabit, onReorder, showStats }) {
   const { preferences } = useAuth();
+  const nameColWidth = nameColumnWidth(preferences.habitNameDisplayLength);
   const dates = getDateRange(dateRange.start, dateRange.end);
   const navigate = useNavigate();
 
@@ -48,7 +55,7 @@ function HabitGrid({ habits, completions, dateRange, onUpdate, onNewHabit, onReo
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <div className="bg-white rounded-sm p-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)] w-fit max-w-full overflow-x-auto">
         <table className="border-separate [border-spacing:1px]">
-          <DateHeaderRow dates={dates} showStats={showStats} />
+          <DateHeaderRow dates={dates} showStats={showStats} nameColWidth={nameColWidth} />
           <SortableContext items={habits.map(h => h.id)} strategy={verticalListSortingStrategy}>
             <tbody>
               {habits.map(habit => (
@@ -62,6 +69,7 @@ function HabitGrid({ habits, completions, dateRange, onUpdate, onNewHabit, onReo
                   navigate={navigate}
                   showStats={showStats}
                   displayLength={preferences.habitNameDisplayLength}
+                  nameColWidth={nameColWidth}
                 />
               ))}
               <TallyTableRow
@@ -70,6 +78,7 @@ function HabitGrid({ habits, completions, dateRange, onUpdate, onNewHabit, onReo
                 completionMap={completionMap}
                 onNewHabit={onNewHabit}
                 showStats={showStats}
+                nameColWidth={nameColWidth}
               />
             </tbody>
           </SortableContext>
@@ -79,13 +88,13 @@ function HabitGrid({ habits, completions, dateRange, onUpdate, onNewHabit, onReo
   );
 }
 
-function DateHeaderRow({ dates, showStats }) {
+function DateHeaderRow({ dates, showStats, nameColWidth }) {
   const today = new Date();
 
   return (
     <thead>
       <tr>
-        <th className="w-[130px] min-w-[130px] pr-1 pb-1 text-center p-0 align-middle"></th>
+        <th style={{ width: nameColWidth, minWidth: nameColWidth }} className="pr-1 pb-1 text-center p-0 align-middle"></th>
 
         {dates.map((date, index) => {
           const monthAbbr = date.toLocaleDateString('en-US', { month: 'short' });
@@ -118,11 +127,11 @@ function DateHeaderRow({ dates, showStats }) {
   );
 }
 
-function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, navigate, showStats, displayLength }) {
+function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, navigate, showStats, displayLength, nameColWidth }) {
+  const [showEditModal, setShowEditModal] = useState(false);
   const displayName = habit.name.length > displayLength
     ? habit.name.slice(0, displayLength) + '…'
     : habit.name;
-  const [showEditModal, setShowEditModal] = useState(false);
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: habit.id });
 
@@ -149,7 +158,7 @@ function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, nav
   return (
     <>
       <tr ref={setNodeRef} style={rowStyle}>
-        <td className="w-[130px] min-w-[130px] pr-1 p-0 align-middle">
+        <td style={{ width: nameColWidth, minWidth: nameColWidth }} className="pr-1 p-0 align-middle">
           <div
             className="flex items-center gap-2 cursor-grab px-2 py-[3px] rounded-sm transition-colors h-6 group hover:bg-surface-subtle"
             onClick={handleHabitClick}
@@ -208,7 +217,7 @@ function HabitTableRow({ habit, dates, completionMap, completions, onUpdate, nav
   );
 }
 
-function TallyTableRow({ habits, dates, completionMap, onNewHabit, showStats }) {
+function TallyTableRow({ habits, dates, completionMap, onNewHabit, showStats, nameColWidth }) {
   const calculateDailyTally = (date) => {
     const dateStr = formatDate(date);
     let completed = 0;
@@ -228,7 +237,7 @@ function TallyTableRow({ habits, dates, completionMap, onNewHabit, showStats }) 
 
   return (
     <tr className="border-t-2 border-line">
-      <td className="w-[130px] min-w-[130px] pr-1 pt-2 p-0 align-middle">
+      <td style={{ width: nameColWidth, minWidth: nameColWidth }} className="pr-1 pt-2 p-0 align-middle">
         <button
           className="w-full px-4 py-2 bg-brand text-white border-none rounded-sm text-sm font-medium cursor-pointer transition-colors hover:bg-brand-hover"
           onClick={onNewHabit}

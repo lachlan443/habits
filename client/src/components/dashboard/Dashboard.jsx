@@ -9,38 +9,31 @@ import { getTodayInTimezone } from '../../utils/timezoneUtils';
 import { useAuth } from '../../context/AuthContext';
 
 function Dashboard() {
-  const { timezone, masterKey } = useAuth();
+  const { timezone, masterKey, preferences } = useAuth();
   const [habits, setHabits] = useState([]);
   const [completions, setCompletions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [daysToShow, setDaysToShow] = useState(14);
-  const [showStats, setShowStats] = useState(true);
   const [dateRange, setDateRange] = useState({
     start: addDays(getTodayInTimezone(timezone), -13),
     end: getTodayInTimezone(timezone)
   });
 
-  const calculateDaysToShow = useCallback(() => {
-    const viewportWidth = window.innerWidth;
-    const habitLabelWidth = 130;
-    const statsColumnsWidth = 72;
-    const dateColumnWidth = 35;
-    const padding = 40;
-    const boardPadding = 16;
-
-    setShowStats(true);
-
-    const fixedWidth = habitLabelWidth + statsColumnsWidth + padding + boardPadding;
-    const availableWidth = viewportWidth - fixedWidth;
-    const days = Math.floor(availableWidth / dateColumnWidth);
-
-    return Math.max(1, Math.min(days, 60));
-  }, []);
+  const calculateDays = useCallback(() => {
+    const displayLength = preferences?.habitNameDisplayLength ?? 20;
+    const nameWidth = Math.max(90, Math.min(displayLength * 8 + 64, 220));
+    const outerPadding = 20;  // 10px each side
+    const tablePadding = 16;  // p-2
+    const statsWidth = 68;    // 60px col + border spacing
+    const dateWidth = 36;     // 35px cell + 1px border spacing
+    const available = window.innerWidth - outerPadding - tablePadding - nameWidth - statsWidth;
+    return Math.max(1, Math.min(Math.floor(available / dateWidth), 60));
+  }, [preferences?.habitNameDisplayLength]);
 
   useEffect(() => {
-    const updateDays = () => {
-      const days = calculateDaysToShow();
+    const updateLayout = () => {
+      const days = calculateDays();
       setDaysToShow(days);
       const today = getTodayInTimezone(timezone);
       setDateRange({
@@ -49,10 +42,10 @@ function Dashboard() {
       });
     };
 
-    updateDays();
-    window.addEventListener('resize', updateDays);
-    return () => window.removeEventListener('resize', updateDays);
-  }, [calculateDaysToShow, timezone]);
+    updateLayout();
+    window.addEventListener('resize', updateLayout);
+    return () => window.removeEventListener('resize', updateLayout);
+  }, [calculateDays, timezone]);
 
   const loadData = useCallback(async (showLoading = false) => {
     try {
@@ -137,7 +130,7 @@ function Dashboard() {
     <div className="min-h-screen bg-surface">
       <Header />
 
-      <div className="mx-auto p-3 overflow-x-hidden flex flex-col items-center max-w-full">
+      <div className="mx-auto px-[10px] py-3 overflow-x-hidden flex flex-col items-center max-w-full">
         <div className="flex justify-center items-center gap-3 mb-2">
           <button onClick={navigatePrev} className={navBtnClass}>&larr;</button>
           <button
@@ -162,7 +155,7 @@ function Dashboard() {
           onUpdate={loadData}
           onNewHabit={() => setShowCreateModal(true)}
           onReorder={handleReorder}
-          showStats={showStats}
+          showStats={true}
         />
       </div>
 
