@@ -22,7 +22,7 @@ function Dashboard() {
 
   const calculateDays = useCallback(() => {
     const nameWidth = Math.max(90, Math.min(Math.round(window.innerWidth * 0.5), 220));
-    const outerPadding = 20;  // 10px each side
+    const outerPadding = 10;  // 5px each side
     const tablePadding = 16;  // p-2
     const statsWidth = 68;    // 60px col + border spacing
     const dateWidth = 36;     // 35px cell + 1px border spacing
@@ -112,8 +112,6 @@ function Dashboard() {
     }
   };
 
-  const navBtnClass = "px-4 py-2 bg-transparent border border-line rounded cursor-pointer text-lg transition-all hover:bg-surface-hover hover:border-line-dark disabled:opacity-50 disabled:cursor-not-allowed";
-
   if (loading) {
     return (
       <div className="min-h-screen">
@@ -129,21 +127,26 @@ function Dashboard() {
     <div className="min-h-screen bg-surface">
       <Header />
 
-      <div className="mx-auto px-[10px] py-3 overflow-x-hidden flex flex-col items-center max-w-full">
-        <div className="flex justify-center items-center gap-3 mb-2">
-          <button onClick={navigatePrev} className={navBtnClass}>&larr;</button>
+      <div className="mx-auto px-[5px] py-3 overflow-x-hidden flex flex-col items-center max-w-full">
+        <div className="inline-flex items-center bg-white border border-line rounded-lg shadow-sm mb-3 overflow-hidden">
+          <button
+            onClick={navigatePrev}
+            className="px-3 py-2 text-ink-soft hover:bg-surface-hover hover:text-ink transition-colors border-r border-line"
+          >
+            ‹
+          </button>
           <button
             onClick={goToToday}
-            className="px-4 py-2 bg-white border border-line rounded cursor-pointer text-sm transition-all hover:bg-surface-hover hover:border-line-dark"
+            className="px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-hover hover:text-ink transition-colors"
           >
             Today
           </button>
           <button
             onClick={navigateNext}
-            className={navBtnClass}
             disabled={isSameDay(dateRange.end, getTodayInTimezone(timezone))}
+            className="px-3 py-2 text-ink-soft hover:bg-surface-hover hover:text-ink transition-colors border-l border-line disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            &rarr;
+            ›
           </button>
         </div>
 
