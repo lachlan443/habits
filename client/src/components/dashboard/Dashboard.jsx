@@ -72,19 +72,18 @@ function Dashboard() {
 
   const navigateNext = () => {
     const today = getTodayInTimezone(timezone);
-    const newEnd = addDays(dateRange.end, 7);
+    const newEnd = addDays(dateRange.end, daysToShow);
     const cappedEnd = newEnd > today ? today : newEnd;
-
     setDateRange({
-      start: addDays(dateRange.start, 7),
+      start: addDays(dateRange.start, daysToShow),
       end: cappedEnd
     });
   };
 
   const navigatePrev = () => {
     setDateRange({
-      start: addDays(dateRange.start, -7),
-      end: addDays(dateRange.end, -7)
+      start: addDays(dateRange.start, -daysToShow),
+      end: addDays(dateRange.end, -daysToShow)
     });
   };
 
