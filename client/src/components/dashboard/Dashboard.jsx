@@ -26,19 +26,16 @@ function Dashboard() {
     const habitLabelWidth = 130;
     const statsColumnsWidth = 72;
     const dateColumnWidth = 35;
-    const padding = 120;
+    const padding = 40;
     const boardPadding = 16;
 
-    const shouldShowStats = viewportWidth >= 600;
-    setShowStats(shouldShowStats);
+    setShowStats(true);
 
-    const fixedWidth = habitLabelWidth + (shouldShowStats ? statsColumnsWidth : 0) + padding + boardPadding;
+    const fixedWidth = habitLabelWidth + statsColumnsWidth + padding + boardPadding;
     const availableWidth = viewportWidth - fixedWidth;
     const days = Math.floor(availableWidth / dateColumnWidth);
 
-    const safeDays = Math.max(7, days - 1);
-
-    return Math.max(7, Math.min(safeDays, 60));
+    return Math.max(1, Math.min(days, 60));
   }, []);
 
   useEffect(() => {
