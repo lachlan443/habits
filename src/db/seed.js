@@ -43,7 +43,7 @@ function dbGet(sql, params) {
 }
 
 async function seedDevUser() {
-  const existing = await dbGet('SELECT id FROM users WHERE username = ?', ['dev']);
+  const existing = await dbGet('SELECT id FROM users WHERE username = ?', ['admin']);
   if (existing) return;
 
   console.log('Seeding dev user (this takes a moment for key derivation)...');
@@ -63,7 +63,7 @@ async function seedDevUser() {
   const passwordHash = await hashPassword(DEV_PASSWORD);
   const userId = await dbRun(
     'INSERT INTO users (username, password_hash, timezone, encryption_salt, encrypted_master_key) VALUES (?, ?, ?, ?, ?)',
-    ['dev', passwordHash, 'Australia/Sydney', saltBase64, encryptedMasterKey]
+    ['admin', passwordHash, 'Australia/Sydney', saltBase64, encryptedMasterKey]
   );
 
   const habits = [
@@ -82,7 +82,7 @@ async function seedDevUser() {
     );
   }
 
-  console.log('Dev user ready — username: dev, password: password');
+  console.log('Dev user ready — username: admin, password: password');
 }
 
 module.exports = { seedDevUser };

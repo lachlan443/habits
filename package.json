@@ -5,8 +5,8 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "concurrently -n backend,frontend -c blue,green \"node --watch src/server.js\" \"npm run dev --prefix client\"",
-    "dev:backend": "node --watch src/server.js",
+    "dev": "npm install && npm install --prefix client && concurrently -n backend,frontend -c blue,green \"node --watch src/server.js\" \"npm run dev --prefix client\"",
+    "dev:backend": "npm install && node --watch src/server.js",
     "test": "jest"
   },
   "keywords": [

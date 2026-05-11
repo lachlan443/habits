@@ -2,7 +2,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const path = require('path');
 
-const PORT = process.env.PORT || 7160;
+const PORT = process.env.PORT || (process.env.NODE_ENV === 'production' ? 7160 : 7161);
 const SESSION_SECRET_FILE = process.env.SESSION_SECRET_FILE ||
   (process.env.NODE_ENV === 'production' ? '/config/session_secret.txt' : path.join(__dirname, '../data/session_secret.txt'));
 
