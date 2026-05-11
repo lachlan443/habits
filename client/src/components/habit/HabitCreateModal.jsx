@@ -6,8 +6,8 @@ import { DEFAULT_COLOR } from '../../utils/colorPalette';
 import { useAuth } from '../../context/AuthContext';
 
 function HabitCreateModal({ onClose, onCreated }) {
-  const { masterKey, preferences } = useAuth();
-  const maxLength = preferences.habitNameMaxLength;
+  const { masterKey } = useAuth();
+  const MAX_STORAGE = 128;
   const [name, setName] = useState('');
   const [color, setColor] = useState(DEFAULT_COLOR);
   const [frequencyType, setFrequencyType] = useState('daily');
@@ -72,16 +72,16 @@ function HabitCreateModal({ onClose, onCreated }) {
           <div className="mb-5">
             <div className="flex justify-between items-baseline mb-1.5">
               <label className={`${fieldLabelClass} mb-0`}>Habit Name</label>
-              <span className={`text-xs ${name.length >= maxLength ? 'text-danger' : 'text-ink-faint'}`}>
-                {name.length}/{maxLength}
+              <span className={`text-xs ${name.length >= MAX_STORAGE ? 'text-danger' : 'text-ink-faint'}`}>
+                {name.length}/{MAX_STORAGE}
               </span>
             </div>
             <input
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value.slice(0, maxLength))}
+              onChange={(e) => setName(e.target.value.slice(0, MAX_STORAGE))}
               placeholder="e.g., Exercise, Read, Meditate"
-              maxLength={maxLength}
+              maxLength={MAX_STORAGE}
               autoFocus
               className={inputClass}
             />

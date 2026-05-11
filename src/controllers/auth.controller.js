@@ -199,7 +199,7 @@ function deleteAccount(req, res) {
 }
 
 const DEFAULT_PREFERENCES = {
-  habitNameMaxLength: 20
+  habitNameDisplayLength: 20
 };
 
 function mergePreferences(stored) {
