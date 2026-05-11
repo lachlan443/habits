@@ -43,10 +43,10 @@ function HabitGrid({ habits, completions, dateRange, onUpdate, onNewHabit, onReo
   };
 
   return (
-    <div className="bg-white rounded-sm p-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)] w-fit max-w-full overflow-x-auto">
-      <table className="border-separate [border-spacing:1px]">
-        <DateHeaderRow dates={dates} showStats={showStats} />
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <div className="bg-white rounded-sm p-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)] w-fit max-w-full overflow-x-auto">
+        <table className="border-separate [border-spacing:1px]">
+          <DateHeaderRow dates={dates} showStats={showStats} />
           <SortableContext items={habits.map(h => h.id)} strategy={verticalListSortingStrategy}>
             <tbody>
               {habits.map(habit => (
@@ -70,9 +70,9 @@ function HabitGrid({ habits, completions, dateRange, onUpdate, onNewHabit, onReo
               />
             </tbody>
           </SortableContext>
-        </DndContext>
-      </table>
-    </div>
+        </table>
+      </div>
+    </DndContext>
   );
 }
 
