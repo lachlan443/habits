@@ -128,6 +128,18 @@ Click "⋯" next to a habit to edit, archive, or delete it.
 - `POST /api/completions`
 - `DELETE /api/completions/by-date`
 
+## Load Testing
+
+`loadtest/habits.js` is a [k6](https://k6.io) script covering signup/login, listing habits, marking completions and fetching stats, with thresholds of p95 < 500 ms and < 1% errors.
+
+```bash
+k6 run loadtest/habits.js                                   # ramp profile
+k6 run -e PROFILE=spike -e PEAK_VUS=10 loadtest/habits.js   # spike profile
+k6 run -e BASE_URL=http://localhost:7161 loadtest/habits.js
+```
+
+PBKDF2 runs in the browser, so the server load is bcrypt login plus API/DB work. Auth endpoints are rate limited (20 per 15 minutes per IP), so keep `PEAK_VUS` under 19 and restart the server between runs.
+
 ## Environment Variables
 
 - `NODE_ENV` — production/development
