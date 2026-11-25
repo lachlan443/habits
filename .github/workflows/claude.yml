@@ -58,6 +58,6 @@ jobs:
           # Optional: Add claude_args to customize behavior and configuration
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
-          # Let Claude run the tests and build, and open the PR for its branch.
-          claude_args: '--allowedTools "Bash(npm test:*),Bash(npm run build:*),Bash(npm ci),Bash(npm install:*),Bash(git status:*),Bash(git diff:*),Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(gh pr create:*),Bash(gh pr view:*)"'
+          # Use Opus 5.5 for issue work, and let Claude run the tests/build and open the PR for its branch.
+          claude_args: '--model claude-opus-5-5 --allowedTools "Bash(npm test:*),Bash(npm run build:*),Bash(npm ci),Bash(npm install:*),Bash(git status:*),Bash(git diff:*),Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(gh pr create:*),Bash(gh pr view:*)"'
 
