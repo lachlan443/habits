@@ -1,0 +1,19 @@
+# Daily base backup to the ObjectStore. Together with continuous WAL
+# archiving this allows point-in-time recovery within the retention window.
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: habits-db-daily
+  labels:
+    app.kubernetes.io/part-of: habits
+spec:
+  # Six fields (seconds first): every day at 03:00 UTC.
+  schedule: "0 0 3 * * *"
+  # Take the first backup as soon as the ScheduledBackup is created.
+  immediate: true
+  backupOwnerReference: self
+  cluster:
+    name: habits-db
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
