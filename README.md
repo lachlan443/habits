@@ -74,7 +74,7 @@ All data is stored in `/config`:
 
 Back up or migrate by copying the `/config` directory.
 
-The container runs as the non-root `node` user (UID/GID 1000) and works with a read-only root filesystem (`docker run --read-only`). `/config` is the only writable path; it is declared as a `VOLUME`, so an anonymous writable volume is created if you don't mount one. A bind-mounted `/config` must be writable by UID 1000 (e.g. `chown -R 1000:1000 /path/to/config`), which is required when upgrading an existing deployment whose data was created by root.
+The container starts as root only long enough to fix ownership of `/config`, then runs the app as the unprivileged `node` user (UID/GID 1000). Existing deployments with root-owned data keep working without any manual `chown`. If ownership can't be changed (read-only or root-squashed mount) or `node` can't read a custom `SESSION_SECRET_FILE`, it keeps running as root like earlier versions. To run fully non-root (for example Kubernetes `runAsNonRoot` or `docker run --user 1000:1000 --read-only`), start the container as that user and make sure `/config` is writable by it; `/config` is declared as a `VOLUME`, so a writable anonymous volume is created if you don't mount one.
 
 ## Encryption Model
 
