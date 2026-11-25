@@ -74,6 +74,8 @@ All data is stored in `/config`:
 
 Back up or migrate by copying the `/config` directory.
 
+The container runs as the non-root `node` user (UID/GID 1000) and works with a read-only root filesystem (`docker run --read-only`). `/config` is the only writable path; it is declared as a `VOLUME`, so an anonymous writable volume is created if you don't mount one. A bind-mounted `/config` must be writable by UID 1000 (e.g. `chown -R 1000:1000 /path/to/config`), which is required when upgrading an existing deployment whose data was created by root.
+
 ## Encryption Model
 
 Each user has a random master key generated at signup. The master key is encrypted with a key derived from their password (PBKDF2) and stored server-side — the server never sees the master key itself. Habit names are encrypted client-side with the master key before being sent to the server.

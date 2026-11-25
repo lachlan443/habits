@@ -22,13 +22,18 @@ COPY src/ ./src/
 
 COPY --from=client-builder /app/client/dist ./public
 
-RUN mkdir -p /config
+# /config is the only writable path. Declaring it as a VOLUME means
+# `docker run --read-only` gets a writable anonymous volume when none is mounted.
+RUN mkdir -p /config && chown node:node /config
+VOLUME /config
 
 ENV NODE_ENV=production
 ENV PORT=7160
 ENV DB_PATH=/config/habits.db
 
 EXPOSE 7160
+
+USER node
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \
   CMD node -e "require('http').get('http://localhost:7160/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
