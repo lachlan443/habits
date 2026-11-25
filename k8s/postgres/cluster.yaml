@@ -1,0 +1,66 @@
+# CloudNativePG cluster for Habits: 1 primary + 2 streaming replicas.
+#
+# Requires the CloudNativePG operator and the Barman Cloud plugin
+# (see k8s/postgres/README.md). Optional: the app keeps using SQLite unless
+# DATABASE_URL is set.
+#
+# Services created by the operator:
+#   habits-db-rw  -> current primary (read/write)
+#   habits-db-ro  -> replicas only
+#   habits-db-r   -> any instance
+# Secret created by the operator (not committed): habits-db-app
+#   keys: username, password, dbname, host, port, uri, ...
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: habits-db
+  labels:
+    app.kubernetes.io/name: habits-db
+    app.kubernetes.io/part-of: habits
+spec:
+  instances: 3
+  # Pin the Postgres major version; minor updates roll out automatically.
+  imageName: ghcr.io/cloudnative-pg/postgresql:17
+  primaryUpdateStrategy: unsupervised
+
+  bootstrap:
+    initdb:
+      database: habits
+      owner: habits
+      # No secret given: the operator generates a random password and stores
+      # it in the "habits-db-app" Secret, so nothing sensitive is committed.
+
+  postgresql:
+    # Commit each transaction on the primary and at least one replica, so
+    # a failover after killing the primary loses no acknowledged writes.
+    # "preferred" keeps the primary writable when no replica is available
+    # (e.g. 2 of 3 instances down) instead of blocking all writes.
+    synchronous:
+      method: any
+      number: 1
+      dataDurability: preferred
+
+  storage:
+    size: 5Gi
+    # storageClass: standard
+
+  # Spread instances over nodes where possible.
+  affinity:
+    enablePodAntiAffinity: true
+    topologyKey: kubernetes.io/hostname
+    podAntiAffinityType: preferred
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+  # Continuous WAL archiving to S3-compatible storage via the Barman Cloud
+  # plugin (see objectstore.yaml). Base backups: scheduled-backup.yaml.
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: habits-db-backup

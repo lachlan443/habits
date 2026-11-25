@@ -76,6 +76,10 @@ Back up or migrate by copying the `/config` directory.
 
 The container starts as root only long enough to fix ownership of `/config`, then runs the app as the unprivileged `node` user (UID/GID 1000). Existing deployments with root-owned data keep working without any manual `chown`. If ownership can't be changed (read-only or root-squashed mount) or `node` can't read a custom `SESSION_SECRET_FILE`, it keeps running as root like earlier versions. To run fully non-root (for example Kubernetes `runAsNonRoot` or `docker run --user 1000:1000 --read-only`), start the container as that user and make sure `/config` is writable by it; `/config` is declared as a `VOLUME`, so a writable anonymous volume is created if you don't mount one.
 
+### Kubernetes: replicated Postgres (optional)
+
+[`k8s/postgres/`](k8s/postgres/README.md) contains optional CloudNativePG manifests for a 3-instance Postgres cluster with a PgBouncer pooler and S3 backups, plus how to give the app a `DATABASE_URL`. This is opt-in work in progress (#83): SQLite in `/config` stays the default and nothing changes for existing deployments.
+
 ## Encryption Model
 
 Each user has a random master key generated at signup. The master key is encrypted with a key derived from their password (PBKDF2) and stored server-side — the server never sees the master key itself. Habit names are encrypted client-side with the master key before being sent to the server.
