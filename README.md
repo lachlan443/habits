@@ -76,6 +76,10 @@ Back up or migrate by copying the `/config` directory.
 
 The container starts as root only long enough to fix ownership of `/config`, then runs the app as the unprivileged `node` user (UID/GID 1000). Existing deployments with root-owned data keep working without any manual `chown`. If ownership can't be changed (read-only or root-squashed mount) or `node` can't read a custom `SESSION_SECRET_FILE`, it keeps running as root like earlier versions. To run fully non-root (for example Kubernetes `runAsNonRoot` or `docker run --user 1000:1000 --read-only`), start the container as that user and make sure `/config` is writable by it; `/config` is declared as a `VOLUME`, so a writable anonymous volume is created if you don't mount one.
 
+### Graceful Shutdown
+
+On `SIGTERM` (`docker stop`, Kubernetes pod termination) or `SIGINT` the server stops accepting new connections, lets in-flight requests finish, closes the database and exits with code 0. If that takes longer than 10 seconds it exits with code 1 anyway. Docker's default stop timeout is also 10 seconds, so if you have unusually slow requests, give the container a little longer (`docker stop -t 15`, `stop_grace_period` in Compose, or `terminationGracePeriodSeconds` in Kubernetes, whose default is 30).
+
 ## Encryption Model
 
 Each user has a random master key generated at signup. The master key is encrypted with a key derived from their password (PBKDF2) and stored server-side — the server never sees the master key itself. Habit names are encrypted client-side with the master key before being sent to the server.

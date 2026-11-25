@@ -20,6 +20,8 @@ process.env.SESSION_SECRET = fs.readFileSync(SESSION_SECRET_FILE, 'utf8').trim()
 
 const app = require('./app');
 const { runMigrations } = require('./db/migrations');
+const db = require('./config/database');
+const { createShutdownHandler } = require('./utils/gracefulShutdown');
 
 async function start() {
   try {
@@ -28,11 +30,14 @@ async function start() {
       const { seedDevUser } = require('./db/seed');
       await seedDevUser();
     }
-    app.listen(PORT, '0.0.0.0', () => {
+    const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`Database: ${process.env.DB_PATH || 'data/habits.db'}`);
     });
+    const shutdown = createShutdownHandler({ server, db });
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
