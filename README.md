@@ -133,5 +133,7 @@ Click "⋯" next to a habit to edit, archive, or delete it.
 - `NODE_ENV` — production/development
 - `PORT` — server port (default: 7160)
 - `DB_PATH` — SQLite database path (default: /config/habits.db)
-- `SESSION_SECRET_FILE` — path to session secret file (default: /config/session_secret.txt)
+- `SESSION_SECRET` — session signing secret. If set, it is used as-is and no secret file is read or written (use this for Kubernetes/Secrets; no `/config` volume needed for the secret)
+- `SESSION_SECRET_FILE` — path to session secret file, used only when `SESSION_SECRET` is unset (default: /config/session_secret.txt, auto-generated on first run)
+- `DATABASE_URL` — not read yet: the server currently uses SQLite via `DB_PATH`. Reserved for a future external database; see #83
 - `VITE_API_URL` — build-time API base URL for the frontend (default: /api)
