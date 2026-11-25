@@ -79,6 +79,9 @@ The container starts as root only long enough to fix ownership of `/config`, the
 ### Kubernetes: replicated Postgres (optional)
 
 [`k8s/postgres/`](k8s/postgres/README.md) contains optional CloudNativePG manifests for a 3-instance Postgres cluster with a PgBouncer pooler and S3 backups, plus how to give the app a `DATABASE_URL`. This is opt-in work in progress (#83): SQLite in `/config` stays the default and nothing changes for existing deployments.
+### Graceful Shutdown
+
+On `SIGTERM` (`docker stop`, Kubernetes pod termination) or `SIGINT` the server stops accepting new connections, lets in-flight requests finish, closes the database and exits with code 0. If that takes longer than 10 seconds it exits with code 1 anyway. Docker's default stop timeout is also 10 seconds, so if you have unusually slow requests, give the container a little longer (`docker stop -t 15`, `stop_grace_period` in Compose, or `terminationGracePeriodSeconds` in Kubernetes, whose default is 30).
 
 ## Encryption Model
 
