@@ -1,0 +1,33 @@
+# S3-compatible backup target for base backups and WAL archives
+# (Barman Cloud plugin). Works with AWS S3, MinIO, Cloudflare R2, Backblaze B2...
+#
+# Edit destinationPath / endpointURL for your storage. Credentials come from
+# the "habits-db-backup-s3" Secret, which you create yourself (never commit it):
+#
+#   kubectl create secret generic habits-db-backup-s3 \
+#     --from-literal=ACCESS_KEY_ID=... \
+#     --from-literal=ACCESS_SECRET_KEY=...
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: habits-db-backup
+  labels:
+    app.kubernetes.io/part-of: habits
+spec:
+  retentionPolicy: "30d"
+  configuration:
+    destinationPath: s3://habits-backups/habits-db
+    # Needed for non-AWS S3-compatible storage; remove for AWS S3.
+    endpointURL: https://s3.example.com
+    s3Credentials:
+      accessKeyId:
+        name: habits-db-backup-s3
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: habits-db-backup-s3
+        key: ACCESS_SECRET_KEY
+    wal:
+      compression: gzip
+      maxParallel: 2
+    data:
+      compression: gzip

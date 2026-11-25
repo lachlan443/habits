@@ -1,22 +1,8 @@
-const fs = require('fs');
-const crypto = require('crypto');
-const path = require('path');
-
 const PORT = process.env.PORT || (process.env.NODE_ENV === 'production' ? 7160 : 7161);
-const SESSION_SECRET_FILE = process.env.SESSION_SECRET_FILE ||
-  (process.env.NODE_ENV === 'production' ? '/config/session_secret.txt' : path.join(__dirname, '../data/session_secret.txt'));
+const { loadSessionSecret } = require('./config/sessionSecret');
 
 // Must run synchronously before app.js is required — app.js reads SESSION_SECRET at module load time
-const secretDir = path.dirname(SESSION_SECRET_FILE);
-if (!fs.existsSync(secretDir)) {
-  fs.mkdirSync(secretDir, { recursive: true });
-}
-if (!fs.existsSync(SESSION_SECRET_FILE)) {
-  const secret = crypto.randomBytes(64).toString('hex');
-  fs.writeFileSync(SESSION_SECRET_FILE, secret, { mode: 0o600 });
-  console.log('Generated new session secret');
-}
-process.env.SESSION_SECRET = fs.readFileSync(SESSION_SECRET_FILE, 'utf8').trim();
+process.env.SESSION_SECRET = loadSessionSecret();
 
 const app = require('./app');
 const { runMigrations } = require('./db/migrations');
