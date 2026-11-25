@@ -22,3 +22,26 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
+
+  # Optional Postgres for development / HA work. Not started by default;
+  # opt in with `docker compose --profile postgres up -d postgres`.
+  # The app only uses it if DATABASE_URL is set (SQLite stays the default).
+  postgres:
+    image: postgres:17-alpine
+    profiles: ["postgres"]
+    environment:
+      - POSTGRES_USER=habits
+      - POSTGRES_PASSWORD=habits
+      - POSTGRES_DB=habits
+    ports:
+      - "5432:5432"
+    volumes:
+      - habits-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U habits -d habits"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  habits-postgres:

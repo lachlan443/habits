@@ -151,5 +151,5 @@ PBKDF2 runs in the browser, so the server load is bcrypt login plus API/DB work.
 - `DB_PATH` — SQLite database path (default: /config/habits.db)
 - `SESSION_SECRET` — session signing secret. If set, it is used as-is and no secret file is read or written (use this for Kubernetes/Secrets; no `/config` volume needed for the secret)
 - `SESSION_SECRET_FILE` — path to session secret file, used only when `SESSION_SECRET` is unset (default: /config/session_secret.txt, auto-generated on first run)
-- `DATABASE_URL` — not read yet: the server currently uses SQLite via `DB_PATH`. Reserved for a future external database; see #83
+- `DATABASE_URL` — optional, experimental. Postgres connection string for the database adapter (`src/db/adapter.js`). Unset by default, which keeps SQLite at `DB_PATH`. The app's queries do not use Postgres yet (HA / Kubernetes work, #83); for development run `docker compose --profile postgres up -d postgres`.
 - `VITE_API_URL` — build-time API base URL for the frontend (default: /api)

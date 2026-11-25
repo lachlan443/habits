@@ -132,6 +132,8 @@ Logout:
 
 ## Database Schema
 
+SQLite at `DB_PATH` is the default and only backend used by the app today. `src/db/adapter.js` provides a promise-based `run`/`get`/`all` API that wraps the same SQLite connection, or a `pg` pool when `DATABASE_URL` is set (opt-in; `?` placeholders are translated to `$1..$n`, and `pg` is only loaded in that case). Existing queries have not been moved onto the adapter yet.
+
 ```sql
 CREATE TABLE users (
   id                   INTEGER PRIMARY KEY AUTOINCREMENT,
