@@ -79,6 +79,9 @@ The container starts as root only long enough to fix ownership of `/config`, the
 ### Kubernetes: replicated Postgres (optional)
 
 [`k8s/postgres/`](k8s/postgres/README.md) contains optional CloudNativePG manifests for a 3-instance Postgres cluster with a PgBouncer pooler and S3 backups, plus how to give the app a `DATABASE_URL`. This is opt-in work in progress (#83): SQLite in `/config` stays the default and nothing changes for existing deployments.
+### Graceful Shutdown
+
+On `SIGTERM` (`docker stop`, Kubernetes pod termination) or `SIGINT` the server stops accepting new connections, lets in-flight requests finish, closes the database and exits with code 0. If that takes longer than 10 seconds it exits with code 1 anyway. Docker's default stop timeout is also 10 seconds, so if you have unusually slow requests, give the container a little longer (`docker stop -t 15`, `stop_grace_period` in Compose, or `terminationGracePeriodSeconds` in Kubernetes, whose default is 30).
 
 ## Encryption Model
 
@@ -152,4 +155,8 @@ PBKDF2 runs in the browser, so the server load is bcrypt login plus API/DB work.
 - `SESSION_SECRET` — session signing secret. If set, it is used as-is and no secret file is read or written (use this for Kubernetes/Secrets; no `/config` volume needed for the secret)
 - `SESSION_SECRET_FILE` — path to session secret file, used only when `SESSION_SECRET` is unset (default: /config/session_secret.txt, auto-generated on first run)
 - `DATABASE_URL` — optional, experimental. Postgres connection string for the database adapter (`src/db/adapter.js`). Unset by default, which keeps SQLite at `DB_PATH`. The app's queries do not use Postgres yet (HA / Kubernetes work, #83); for development run `docker compose --profile postgres up -d postgres`.
+- `LOG_FORMAT` — request log format: `json` (default, one JSON line per request with `ts`, `request_id`, `method`, `route`, `status`, `duration_ms`) or `text` (readable, for local development). Bodies, cookies, headers and query strings are never logged. An incoming `X-Request-Id` is reused, otherwise one is generated, and it is returned in the `X-Request-Id` response header.
+- `METRICS_ENABLED` — set to `true` to expose Prometheus metrics at `GET /metrics` (default: off, route not registered). Includes default Node.js metrics and `http_request_duration_seconds` labelled by method, route pattern and status code.
+- `METRICS_TOKEN` — bearer token required for `/metrics` when enabled (`Authorization: Bearer <token>`). Use a Kubernetes Secret. If unset, a token is generated into `METRICS_TOKEN_FILE` on first start.
+- `METRICS_TOKEN_FILE` — path to the metrics token file, used only when `METRICS_TOKEN` is unset (default: /config/metrics_token.txt)
 - `VITE_API_URL` — build-time API base URL for the frontend (default: /api)
