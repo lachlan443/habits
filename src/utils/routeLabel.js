@@ -5,6 +5,9 @@ function routeLabel(req) {
   if (req.route && req.route.path !== undefined) {
     return `${req.baseUrl || ''}${req.route.path}`;
   }
+  // Rejected by router-level middleware (e.g. auth) before a handler matched:
+  // the mount path is fixed, so it is safe as a label.
+  if (req.baseUrl) return `${req.baseUrl}/*`;
   return 'unmatched';
 }
 

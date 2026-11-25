@@ -72,6 +72,19 @@ describe('requestLogger', () => {
     expect(JSON.parse(lines[0])).toMatchObject({ route: 'unmatched', status: 404 });
   });
 
+  test('requests rejected inside a router are labelled by the router mount path', async () => {
+    const lines = [];
+    const app = express();
+    app.use(requestLogger({ write: (l) => lines.push(l) }));
+    const router = express.Router();
+    router.use((req, res) => res.status(401).json({ error: 'no' }));
+    app.use('/api/habits', router);
+    server = await new Promise((r) => { const s = app.listen(0, '127.0.0.1', () => r(s)); });
+    await get(server, '/api/habits/12345');
+    await flush();
+    expect(JSON.parse(lines[0])).toMatchObject({ route: '/api/habits/*', status: 401 });
+  });
+
   test('text format is a single readable line', async () => {
     const lines = [];
     server = await start(requestLogger({ format: 'text', write: (l) => lines.push(l) }));
