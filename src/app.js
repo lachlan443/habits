@@ -9,10 +9,22 @@ const authRoutes = require('./routes/auth.routes');
 const habitRoutes = require('./routes/habits.routes');
 const completionRoutes = require('./routes/completions.routes');
 const errorHandler = require('./middleware/errorHandler');
+const requestLogger = require('./middleware/requestLogger');
+const { createMetrics } = require('./metrics');
 
 const app = express();
 
 app.set('trust proxy', 1);
+
+// Structured request logs, and opt-in Prometheus metrics (METRICS_ENABLED=true).
+// First in the stack so every request is covered, including rejected ones.
+app.use(requestLogger());
+const metrics = createMetrics();
+if (metrics) {
+  app.use(metrics.middleware);
+  app.get('/metrics', metrics.handler);
+}
+
 app.use(helmet());
 
 const DB_PATH = process.env.DB_PATH ||
@@ -43,11 +55,6 @@ app.use(session({
     maxAge: 7 * 24 * 60 * 60 * 1000
   }
 }));
-
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-  next();
-});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/habits', habitRoutes);
