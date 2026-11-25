@@ -22,7 +22,7 @@ app.use(requestLogger());
 const metrics = createMetrics();
 if (metrics) {
   app.use(metrics.middleware);
-  app.get('/metrics', metrics.handler);
+  app.get('/metrics', metrics.limiter, metrics.handler);
 }
 
 app.use(helmet());

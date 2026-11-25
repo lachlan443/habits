@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 const routeLabel = require('./utils/routeLabel');
 const { loadMetricsToken } = require('./config/sessionSecret');
 
@@ -36,8 +37,19 @@ function createMetrics(env = process.env, { collectDefault = true } = {}) {
     return Boolean(match) && crypto.timingSafeEqual(digest(match[1]), expected);
   }
 
+  // Scrapes arrive every few seconds at most; this only stops abuse of the
+  // token check. Counters are per process (see #76 for a shared store).
+  const limiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests' },
+  });
+
   return {
     register,
+    limiter,
     middleware(req, res, next) {
       const start = process.hrtime.bigint();
       res.on('finish', () => {

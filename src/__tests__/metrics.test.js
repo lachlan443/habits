@@ -8,7 +8,7 @@ const { createMetrics } = require('../metrics');
 function start(metrics) {
   const app = express();
   app.use(metrics.middleware);
-  app.get('/metrics', metrics.handler);
+  app.get('/metrics', metrics.limiter, metrics.handler);
   const router = express.Router();
   router.get('/:id', (req, res) => res.json({ ok: true }));
   app.use('/api/habits', router);
