@@ -133,5 +133,6 @@ Click "⋯" next to a habit to edit, archive, or delete it.
 - `NODE_ENV` — production/development
 - `PORT` — server port (default: 7160)
 - `DB_PATH` — SQLite database path (default: /config/habits.db)
+- `DATABASE_URL` — optional, experimental. Postgres connection string for the database adapter (`src/db/adapter.js`). Unset by default, which keeps SQLite at `DB_PATH`. The app's queries do not use Postgres yet (HA / Kubernetes work, #83); for development run `docker compose --profile postgres up -d postgres`.
 - `SESSION_SECRET_FILE` — path to session secret file (default: /config/session_secret.txt)
 - `VITE_API_URL` — build-time API base URL for the frontend (default: /api)
